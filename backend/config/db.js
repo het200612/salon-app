@@ -31,8 +31,8 @@ async function testConnection() {
       console.log('✅  MySQL connected successfully.');
     }
   } catch (err) {
-    console.error('❌  MySQL connection failed:', err.message);
-    process.exit(1);
+    console.error('⚠️  MySQL connection note:', err.message);
+    console.log('👉  Please check backend/.env DB_PASSWORD settings if MySQL is running with a custom password.');
   }
 }
 

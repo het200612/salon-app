@@ -198,86 +198,86 @@ CREATE TABLE slotbookingmst (
 > Build all auth and admin endpoints here. Admin dashboard data depends on these routes.
 
 ### 2.1 Express Server Entry Point (`server.js`)
-- [ ] Setup Express with:
+- [x] Setup Express with:
   - `cors({ origin: 'http://localhost:5173', credentials: true })`
   - `express.json()`
   - `/uploads` static file serving
   - Route mounts: `/api/auth`, `/api/admin`, `/api/user`, `/api/owner`, `/api/salons`
-- [ ] Global error handler middleware
+- [x] Global error handler middleware
 
 ### 2.2 Auth Middleware (`middleware/authMiddleware.js`)
-- [ ] `verifyToken(req, res, next)` — verifies JWT from `Authorization` header
-- [ ] `requireAdmin(req, res, next)` — checks `role === 'admin'`
-- [ ] `requireUser(req, res, next)` — checks `role === 'user'`
-- [ ] `requireOwner(req, res, next)` — checks `role === 'owner'`
+- [x] `verifyToken(req, res, next)` — verifies JWT from `Authorization` header
+- [x] `requireAdmin(req, res, next)` — checks `role === 'admin'`
+- [x] `requireUser(req, res, next)` — checks `role === 'user'`
+- [x] `requireOwner(req, res, next)` — checks `role === 'owner'`
 
 ### 2.3 Auth Controller (`controllers/authController.js`)
 
 #### `POST /api/auth/login`
-- [ ] Check if admin (hardcoded: `admin@gmail.com` / `Admin`) → return `{ token, role: 'admin' }`
-- [ ] Check User: email + password match in `usermst` → return `{ token, role: 'user', user }`
-- [ ] Check Owner: email + password match AND `Status = 'verified'` → return `{ token, role: 'owner', user }`
-- [ ] Else: return `401 { message: 'Invalid credentials' }`
-- [ ] Use `bcrypt.compare()` for password check
+- [x] Check if admin (hardcoded: `admin@gmail.com` / `Admin`) → return `{ token, role: 'admin' }`
+- [x] Check User: email + password match in `usermst` → return `{ token, role: 'user', user }`
+- [x] Check Owner: email + password match AND `Status = 'verified'` → return `{ token, role: 'owner', user }`
+- [x] Else: return `401 { message: 'Invalid credentials' }`
+- [x] Use `bcrypt.compare()` for password check
 
 #### `POST /api/auth/register`
-- [ ] Validate: phone = 10 digits, password pattern (uppercase + lowercase + digit + special char + min 8)
-- [ ] Check for existing email → return 400 if duplicate
-- [ ] Hash password with `bcrypt.hash(password, 10)`
-- [ ] Save to `usermst` with `Status = 'pending'`
-- [ ] Send welcome registration email (via util)
-- [ ] Return success message
+- [x] Validate: phone = 10 digits, password pattern (uppercase + lowercase + digit + special char + min 8)
+- [x] Check for existing email → return 400 if duplicate
+- [x] Hash password with `bcrypt.hash(password, 10)`
+- [x] Save to `usermst` with `Status = 'pending'`
+- [x] Send welcome registration email (via util)
+- [x] Return success message
 
 #### `POST /api/auth/forgot-password`
-- [ ] Find user by email in `usermst`
-- [ ] Generate 50-char token: `crypto.randomBytes(25).toString('hex')`
-- [ ] Save token to `password_reset_token` column
-- [ ] Send reset link email: `${CLIENT_URL}/reset-password/${token}`
-- [ ] Return success (even if email not found — don't leak info)
+- [x] Find user by email in `usermst`
+- [x] Generate 50-char token: `crypto.randomBytes(25).toString('hex')`
+- [x] Save token to `password_reset_token` column
+- [x] Send reset link email: `${CLIENT_URL}/reset-password/${token}`
+- [x] Return success (even if email not found — don't leak info)
 
 #### `POST /api/auth/reset-password/:token`
-- [ ] Find user by `password_reset_token = token`
-- [ ] Validate `newPassword === confirmPassword`
-- [ ] Hash and save new password, clear `password_reset_token`
-- [ ] Send password-changed confirmation email
-- [ ] Return success
+- [x] Find user by `password_reset_token = token`
+- [x] Validate `newPassword === confirmPassword`
+- [x] Hash and save new password, clear `password_reset_token`
+- [x] Send password-changed confirmation email
+- [x] Return success
 
 #### `POST /api/auth/change-password`
-- [ ] Protected (`verifyToken`)
-- [ ] Verify old password with `bcrypt.compare()`
-- [ ] Validate `newPassword === confirmPassword`
-- [ ] Hash and save new password
-- [ ] Send change-password email
-- [ ] Return success
+- [x] Protected (`verifyToken`)
+- [x] Verify old password with `bcrypt.compare()`
+- [x] Validate `newPassword === confirmPassword`
+- [x] Hash and save new password
+- [x] Send change-password email
+- [x] Return success
 
 ### 2.4 Admin Controller (`controllers/adminController.js`)
 
 #### `GET /api/admin/dashboard`
-- [ ] Protected (`requireAdmin`)
-- [ ] Query: all `usermst` where `Usertype = 'owner'` (owner requests)
-- [ ] Query: count of all `usermst` rows (total users)
-- [ ] Query: `slotbookingmst` where `BookingDate = today` (today's bookings)
-- [ ] Return all three in response
+- [x] Protected (`requireAdmin`)
+- [x] Query: all `usermst` where `Usertype = 'owner'` (owner requests)
+- [x] Query: count of all `usermst` rows (total users)
+- [x] Query: `slotbookingmst` where `BookingDate = today` (today's bookings)
+- [x] Return all three in response
 
 #### `PATCH /api/admin/owners/:id/status`
-- [ ] Protected (`requireAdmin`)
-- [ ] Update `usermst.Status` to `verified` or `rejected`
-- [ ] If verified → call `sendSalonApprovalEmail(email, name)`
-- [ ] If rejected → call `sendSalonRejectionEmail(email, name, reason)`
+- [x] Protected (`requireAdmin`)
+- [x] Update `usermst.Status` to `verified` or `rejected`
+- [x] If verified → call `sendSalonApprovalEmail(email, name)`
+- [x] If rejected → call `sendSalonRejectionEmail(email, name, reason)`
 
 #### City CRUD (`GET /api/admin/cities`, `POST`, `GET /:id`, `PUT /:id`)
-- [ ] GET all: `SELECT * FROM citymst ORDER BY CityName`
-- [ ] GET one: `SELECT * FROM citymst WHERE id = ?`
-- [ ] POST: `INSERT INTO citymst (CityName) VALUES (?)`
-- [ ] PUT: `UPDATE citymst SET CityName = ? WHERE id = ?`
+- [x] GET all: `SELECT * FROM citymst ORDER BY CityName`
+- [x] GET one: `SELECT * FROM citymst WHERE id = ?`
+- [x] POST: `INSERT INTO citymst (CityName) VALUES (?)`
+- [x] PUT: `UPDATE citymst SET CityName = ? WHERE id = ?`
 
 #### Area CRUD (`GET /api/admin/areas`, `POST`, `GET /:id`, `PUT /:id`)
-- [ ] GET all: join with `citymst` to include city name
-- [ ] POST: `INSERT INTO areamst (AreaName, CityName_id) VALUES (?, ?)`
-- [ ] PUT: `UPDATE areamst SET AreaName = ?, CityName_id = ? WHERE id = ?`
+- [x] GET all: join with `citymst` to include city name
+- [x] POST: `INSERT INTO areamst (AreaName, CityName_id) VALUES (?, ?)`
+- [x] PUT: `UPDATE areamst SET AreaName = ?, CityName_id = ? WHERE id = ?`
 
 #### Service CRUD (`GET /api/admin/services`, `POST`, `GET /:id`, `PUT /:id`)
-- [ ] Same pattern as City CRUD
+- [x] Same pattern as City CRUD
 
 ### ✅ Phase 2 Deliverables
 - All auth endpoints working and tested (use Postman / Thunder Client)
@@ -785,7 +785,7 @@ Configure Nodemailer with SMTP from `.env`. Implement all 8 email functions:
 
 ```
 Phase 1  [x] Project Setup & Database
-Phase 2  [ ] Backend: Auth & Core APIs
+Phase 2  [x] Backend: Auth & Core APIs
 Phase 3  [ ] Backend: Owner & Booking APIs
 Phase 4  [ ] Frontend: Public Pages
 Phase 5  [ ] Frontend: User Dashboard

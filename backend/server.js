@@ -18,9 +18,9 @@ app.use(express.urlencoded({ extended: true }));
 // Serve uploaded images as static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ─── Routes (stubbed — will be filled in Phase 2 & 3) ────────────────────────
-// app.use('/api/auth',   require('./routes/authRoutes'));
-// app.use('/api/admin',  require('./routes/adminRoutes'));
+// ─── Routes ─────────────────────────────────────────────────────────────────
+app.use('/api/auth',   require('./routes/authRoutes'));
+app.use('/api/admin',  require('./routes/adminRoutes'));
 // app.use('/api/user',   require('./routes/userRoutes'));
 // app.use('/api/owner',  require('./routes/ownerRoutes'));
 // app.use('/api/salons', require('./routes/salonRoutes'));
