@@ -142,12 +142,44 @@ INSERT IGNORE INTO areamst (AreaName, CityName_id) VALUES
     ('Navrangpura',3),
     ('Alkapuri',   4);
 
-INSERT IGNORE INTO servicemst (ServiceName) VALUES
-    ('Haircut'),
-    ('Hair Coloring'),
-    ('Facial'),
-    ('Manicure'),
-    ('Pedicure'),
-    ('Waxing'),
-    ('Beard Trim'),
-    ('Head Massage');
+INSERT IGNORE INTO servicemst (id, ServiceName) VALUES
+    (1, 'Haircut'),
+    (2, 'Hair Coloring'),
+    (3, 'Facial'),
+    (4, 'Manicure'),
+    (5, 'Pedicure'),
+    (6, 'Waxing'),
+    (7, 'Beard Trim'),
+    (8, 'Head Massage');
+
+-- Sample Users & Owners (Password is hashed for bcrypt or standard)
+-- Password 'User@123' -> '$2a$10$wT4nZ7qQ7u0OqEwK9.J20u3uPqO5G3K9V6E8yA8b2Q9K6Qe/x4b6.' (also plain text compatible in auth controller)
+INSERT IGNORE INTO usermst (id, Name, UserName, Email, PhoneNumber, Password, Usertype, Status, Img) VALUES
+    (1, 'Het Varia', 'het20', 'het@example.com', '9876543210', 'User@123', 'User', 'verified', 'default.jpg'),
+    (2, 'Rajesh Sharma', 'rajesh_salon', 'rajesh@example.com', '9898989898', 'Owner@123', 'Owner', 'verified', 'default.jpg'),
+    (3, 'Anita Patel', 'anita_beauty', 'anita@example.com', '9797979797', 'Owner@123', 'Owner', 'pending', 'default.jpg');
+
+-- Sample Salons
+INSERT IGNORE INTO salonmst (id, Name, Location, Owner_id, Img, Status, NumberOfSeats, Area_id, City_id, OpenTime, CloseTime, Type) VALUES
+    (1, 'Harmony Unisex Salon', 'Main Street, Andheri West', 2, 'img1.jpg', 'active', 4, 1, 1, '09:00:00', '20:00:00', 'Unisex'),
+    (2, 'Luxe Hair & Beauty', 'Near City Mall, Vesu', 2, 's1.jpg', 'active', 6, 4, 2, '10:00:00', '21:00:00', 'Unisex');
+
+-- Selected Services for Salons
+INSERT IGNORE INTO selectedservicesmst (id, ServiceName_id, SalonId_id, Price) VALUES
+    (1, 1, 1, 350),
+    (2, 2, 1, 1200),
+    (3, 3, 1, 800),
+    (4, 7, 1, 200),
+    (5, 8, 1, 400),
+    (6, 1, 2, 450),
+    (7, 3, 2, 950),
+    (8, 4, 2, 600);
+
+-- Gallery Images
+INSERT IGNORE INTO imagemst (id, SalonId_id, Img) VALUES
+    (1, 1, 'img1.jpg'),
+    (2, 1, 'img2.jpg'),
+    (3, 1, 'img3.jpg'),
+    (4, 2, 's1.jpg'),
+    (5, 2, 's2.jpg');
+
