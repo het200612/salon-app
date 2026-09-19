@@ -182,8 +182,23 @@ async function getSalonSlots(req, res) {
   }
 }
 
+/**
+ * GET /api/salons/areas
+ * Public. List all available areas.
+ */
+async function getAreas(req, res) {
+  try {
+    const [areas] = await pool.query('SELECT id, AreaName, City_id FROM areamst ORDER BY AreaName ASC');
+    return res.json(areas);
+  } catch (err) {
+    console.error('Get areas error:', err);
+    return res.status(500).json({ message: 'Server error loading areas.' });
+  }
+}
+
 module.exports = {
   getSalons,
   getSalonById,
   getSalonSlots,
+  getAreas,
 };

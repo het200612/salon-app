@@ -9,6 +9,31 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import AboutPage from './pages/AboutPage';
+import ContactPage from './pages/ContactPage';
+
+// Salon Pages
+import SalonDetailsPage from './pages/salon/SalonDetailsPage';
+import BookingPage from './pages/salon/BookingPage';
+
+// User Dashboard Pages (Phase 5)
+import UserProfilePage from './pages/user/UserProfilePage';
+import BookingHistoryPage from './pages/user/BookingHistoryPage';
+import EditProfilePage from './pages/user/EditProfilePage';
+import ChangePasswordPage from './pages/user/ChangePasswordPage';
+
+// Owner Dashboard Pages (Phase 6)
+import OwnerDashboardPage from './pages/owner/OwnerDashboardPage';
+import RegisterSalonPage from './pages/owner/RegisterSalonPage';
+import EditSalonPage from './pages/owner/EditSalonPage';
+import ManageServicesPage from './pages/owner/ManageServicesPage';
+import UploadImagesPage from './pages/owner/UploadImagesPage';
+
+// Admin Dashboard Pages (Phase 7)
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
+import ManageCitiesPage from './pages/admin/ManageCitiesPage';
+import ManageAreasPage from './pages/admin/ManageAreasPage';
+import ManageAdminServicesPage from './pages/admin/ManageServicesPage';
 
 function App() {
   return (
@@ -17,53 +42,128 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+          <Route path="/salon/:id" element={<SalonDetailsPage />} />
 
-          {/* Protected User Dashboard Routes (Phase 5) */}
+          {/* User Protected Routes */}
+          <Route
+            path="/salon/:id/book"
+            element={
+              <ProtectedRoute role="user">
+                <BookingPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/user/profile"
             element={
               <ProtectedRoute role="user">
-                <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--color-primary)' }}>
-                  <h2>User Dashboard & Profile (Phase 5)</h2>
-                </div>
+                <UserProfilePage />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/salon/:id"
+            path="/user/bookings"
             element={
               <ProtectedRoute role="user">
-                <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--color-primary)' }}>
-                  <h2>Salon Details & Booking (Phase 5)</h2>
-                </div>
+                <BookingHistoryPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/user/edit-profile"
+            element={
+              <ProtectedRoute role="user">
+                <EditProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/user/change-password"
+            element={
+              <ProtectedRoute role="user">
+                <ChangePasswordPage />
               </ProtectedRoute>
             }
           />
 
-          {/* Protected Owner Dashboard Routes (Phase 6) */}
+          {/* Owner Protected Routes */}
           <Route
             path="/owner/dashboard"
             element={
               <ProtectedRoute role="owner">
-                <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--color-primary)' }}>
-                  <h2>Owner Dashboard (Phase 6)</h2>
-                </div>
+                <OwnerDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/owner/register-salon"
+            element={
+              <ProtectedRoute role="owner">
+                <RegisterSalonPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/owner/edit-salon"
+            element={
+              <ProtectedRoute role="owner">
+                <EditSalonPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/owner/services"
+            element={
+              <ProtectedRoute role="owner">
+                <ManageServicesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/owner/images"
+            element={
+              <ProtectedRoute role="owner">
+                <UploadImagesPage />
               </ProtectedRoute>
             }
           />
 
-          {/* Protected Admin Dashboard Routes (Phase 7) */}
+          {/* Admin Protected Routes */}
           <Route
             path="/admin/dashboard"
             element={
               <ProtectedRoute role="admin">
-                <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--color-primary)' }}>
-                  <h2>Admin Dashboard (Phase 7)</h2>
-                </div>
+                <AdminDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/cities"
+            element={
+              <ProtectedRoute role="admin">
+                <ManageCitiesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/areas"
+            element={
+              <ProtectedRoute role="admin">
+                <ManageAreasPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/services"
+            element={
+              <ProtectedRoute role="admin">
+                <ManageAdminServicesPage />
               </ProtectedRoute>
             }
           />

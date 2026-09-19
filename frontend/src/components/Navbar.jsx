@@ -72,8 +72,8 @@ export const Navbar = () => {
           >
             Home
           </Link>
-          <a
-            href="/#about"
+          <Link
+            to="/about"
             style={{
               color: '#121212',
               fontWeight: '600',
@@ -85,9 +85,9 @@ export const Navbar = () => {
             onMouseLeave={(e) => { e.target.style.color = '#121212'; }}
           >
             About Us
-          </a>
-          <a
-            href="/#contact"
+          </Link>
+          <Link
+            to="/contact"
             style={{
               color: '#121212',
               fontWeight: '600',
@@ -99,7 +99,7 @@ export const Navbar = () => {
             onMouseLeave={(e) => { e.target.style.color = '#121212'; }}
           >
             Contact
-          </a>
+          </Link>
 
           {isAuthenticated ? (
             <>

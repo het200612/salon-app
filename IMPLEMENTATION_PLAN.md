@@ -788,12 +788,12 @@ Phase 1  [x] Project Setup & Database
 Phase 2  [x] Backend: Auth & Core APIs
 Phase 3  [x] Backend: Owner & Booking APIs
 Phase 4  [x] Frontend: Public Pages
-Phase 5  [ ] Frontend: User Dashboard
-Phase 6  [ ] Frontend: Owner Dashboard
-Phase 7  [ ] Frontend: Admin Dashboard
-Phase 8  [ ] Email & File Upload Integration
-Phase 9  [ ] Polish, Validation & Testing
-Phase 10 [ ] Final Review & Deployment Prep
+Phase 5  [x] Frontend: User Dashboard
+Phase 6  [x] Frontend: Owner Dashboard
+Phase 7  [x] Frontend: Admin Dashboard
+Phase 8  [x] Email & File Upload Integration
+Phase 9  [x] Polish, Validation & Testing
+Phase 10 [x] Final Review & Deployment Prep
 ```
 
 ---
