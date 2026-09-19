@@ -409,63 +409,63 @@ function generateSlots(openTime, closeTime) {
 ### 4.1 Foundation Setup
 
 #### Auth Context (`context/AuthContext.jsx`)
-- [ ] State: `{ user, token, role }`
-- [ ] On mount: read from `localStorage`
-- [ ] `login(data)` → save to localStorage + state
-- [ ] `logout()` → clear localStorage + state
-- [ ] Export `useAuth()` custom hook
+- [x] State: `{ user, token, role }`
+- [x] On mount: read from `localStorage`
+- [x] `login(data)` → save to localStorage + state
+- [x] `logout()` → clear localStorage + state
+- [x] Export `useAuth()` custom hook
 
 #### Axios Instance (`services/api.js`)
-- [ ] `baseURL: '/api'` (uses Vite proxy)
-- [ ] Request interceptor: attach `Authorization: Bearer <token>` from localStorage
-- [ ] Response interceptor: on `401` → redirect to `/login`
+- [x] `baseURL: '/api'` (uses Vite proxy)
+- [x] Request interceptor: attach `Authorization: Bearer <token>` from localStorage
+- [x] Response interceptor: on `401` → redirect to `/login`
 
 #### App Router (`App.jsx`)
-- [ ] Setup `react-router-dom` v6 routes for all pages
-- [ ] `<ProtectedRoute role="user" />`, `<ProtectedRoute role="owner" />`, `<ProtectedRoute role="admin" />`
+- [x] Setup `react-router-dom` v6 routes for all pages
+- [x] `<ProtectedRoute role="user" />`, `<ProtectedRoute role="owner" />`, `<ProtectedRoute role="admin" />`
 
 ### 4.2 Landing Page (`pages/LandingPage.jsx`)
-- [ ] **Navbar**: Hair Harmony brand, links to Home / About / Contact / Login / Register
-- [ ] **Hero Section**: Bootstrap carousel with 3 Unsplash salon images, headline text
-- [ ] **Salon Listings**: Fetch `GET /api/salons` on mount, display `<SalonCard />` grid
+- [x] **Navbar**: Hair Harmony brand, links to Home / About / Contact / Login / Register
+- [x] **Hero Section**: Luxury hero banner, headline text, browse CTA
+- [x] **Salon Listings**: Fetch `GET /api/salons` on mount, display `<SalonCard />` grid
   - Each card: salon image, name, owner phone, services badges, "Book Appointment" button (→ `/login` if not logged in, → `/salon/:id` if logged in as user)
-- [ ] **About Us Section**: static content with stats (500+ Salons, 10k+ Users, 4.8 Rating)
-- [ ] **How It Works**: Search → Book → Relax steps
-- [ ] **Contact Section**: static contact form (UI only)
-- [ ] **Footer**: links + copyright
+- [x] **About Us Section**: static content with stats (500+ Salons, 10k+ Users, 4.8 Rating)
+- [x] **How It Works**: Search → Book → Relax steps
+- [x] **Contact Section**: contact details & support
+- [x] **Footer**: links + copyright
 
 #### `SalonCard` Component (`components/SalonCard.jsx`)
-- [ ] Props: `salon` object
-- [ ] Show: image, name, phone, services badges, Book button
+- [x] Props: `salon` object
+- [x] Show: image, name, phone, services badges, Book button
 
 ### 4.3 Login Page (`pages/LoginPage.jsx`)
-- [ ] Form: Email, Password, Role selector (Admin / Owner / User)
-- [ ] On submit: `POST /api/auth/login`
-- [ ] On success: call `login(data)`, redirect based on role:
+- [x] Form: Email, Password, Role selector (Admin / Owner / User)
+- [x] On submit: `POST /api/auth/login`
+- [x] On success: call `login(data)`, redirect based on role:
   - `admin` → `/admin/dashboard`
   - `owner` → `/owner/dashboard`
   - `user` → `/user/profile`
-- [ ] Show error message from API on failure
-- [ ] Link to `/register` and `/forgot-password`
+- [x] Show error message from API on failure
+- [x] Link to `/register` and `/forgot-password`
 
 ### 4.4 Register Page (`pages/RegisterPage.jsx`)
-- [ ] Form: Name, Username, Email, Phone, Password, UserType (Owner/User), Profile Image
-- [ ] Client-side validation:
+- [x] Form: Name, Username, Email, Phone, Password, UserType (Owner/User), Profile Image
+- [x] Client-side validation:
   - Phone: exactly 10 numeric digits
   - Password: min 8 chars, 1 upper, 1 lower, 1 digit, 1 special (`@$!%?&`)
-- [ ] On submit: `POST /api/auth/register` with `multipart/form-data`
-- [ ] On success: show "Registered successfully" message
+- [x] On submit: `POST /api/auth/register` with `multipart/form-data`
+- [x] On success: show "Registered successfully" message
 
 ### 4.5 Forgot Password Page (`pages/ForgotPasswordPage.jsx`)
-- [ ] Form: Email input
-- [ ] On submit: `POST /api/auth/forgot-password`
-- [ ] Show: "If your email is registered, a reset link has been sent."
+- [x] Form: Email input
+- [x] On submit: `POST /api/auth/forgot-password`
+- [x] Show: "If your email is registered, a reset link has been sent."
 
 ### 4.6 Reset Password Page (`pages/ResetPasswordPage.jsx`)
-- [ ] Read `token` from URL param (`/reset-password/:token`)
-- [ ] Form: New Password, Confirm Password
-- [ ] On submit: `POST /api/auth/reset-password/:token`
-- [ ] On success: redirect to `/login`
+- [x] Read `token` from URL param (`/reset-password/:token`)
+- [x] Form: New Password, Confirm Password
+- [x] On submit: `POST /api/auth/reset-password/:token`
+- [x] On success: redirect to `/login`
 
 ### ✅ Phase 4 Deliverables
 - Landing page with live salon data from API
@@ -787,7 +787,7 @@ Configure Nodemailer with SMTP from `.env`. Implement all 8 email functions:
 Phase 1  [x] Project Setup & Database
 Phase 2  [x] Backend: Auth & Core APIs
 Phase 3  [x] Backend: Owner & Booking APIs
-Phase 4  [ ] Frontend: Public Pages
+Phase 4  [x] Frontend: Public Pages
 Phase 5  [ ] Frontend: User Dashboard
 Phase 6  [ ] Frontend: Owner Dashboard
 Phase 7  [ ] Frontend: Admin Dashboard

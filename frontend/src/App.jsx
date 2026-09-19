@@ -1,48 +1,78 @@
 import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+
+// Public Pages
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 function App() {
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: '2rem',
-      textAlign: 'center'
-    }}>
-      <header style={{ maxWidth: '640px' }}>
-        <h1 style={{
-          fontFamily: 'var(--font-serif)',
-          fontSize: '2.5rem',
-          color: 'var(--color-primary)',
-          marginBottom: '1rem'
-        }}>
-          Hair Harmony
-        </h1>
-        <p style={{
-          color: 'var(--color-text-muted)',
-          fontSize: '1.1rem',
-          marginBottom: '2rem'
-        }}>
-          Premium Salon & Grooming Platform
-        </p>
-        <div style={{
-          backgroundColor: 'var(--color-card)',
-          border: '1px solid var(--color-border)',
-          borderRadius: 'var(--radius-md)',
-          padding: '1.5rem',
-          boxShadow: 'var(--shadow-card)'
-        }}>
-          <p style={{ color: 'var(--color-success)', fontWeight: '600' }}>
-            ✨ Phase 1 Setup Complete
-          </p>
-          <p style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
-            Vite + React frontend and Node.js + Express backend scaffolding ready.
-          </p>
-        </div>
-      </header>
-    </div>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+
+          {/* Protected User Dashboard Routes (Phase 5) */}
+          <Route
+            path="/user/profile"
+            element={
+              <ProtectedRoute role="user">
+                <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--color-primary)' }}>
+                  <h2>User Dashboard & Profile (Phase 5)</h2>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/salon/:id"
+            element={
+              <ProtectedRoute role="user">
+                <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--color-primary)' }}>
+                  <h2>Salon Details & Booking (Phase 5)</h2>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Protected Owner Dashboard Routes (Phase 6) */}
+          <Route
+            path="/owner/dashboard"
+            element={
+              <ProtectedRoute role="owner">
+                <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--color-primary)' }}>
+                  <h2>Owner Dashboard (Phase 6)</h2>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Protected Admin Dashboard Routes (Phase 7) */}
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute role="admin">
+                <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--color-primary)' }}>
+                  <h2>Admin Dashboard (Phase 7)</h2>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Catch-all Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
