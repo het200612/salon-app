@@ -292,20 +292,20 @@ CREATE TABLE slotbookingmst (
 ### 3.1 Salon Controller (`controllers/salonController.js`)
 
 #### `GET /api/salons`
-- [ ] Public. Fetch all salons with:
+- [x] Public. Fetch all salons with:
   - Joined owner phone (`usermst.PhoneNumber`)
   - Joined area name (`areamst.AreaName`)
   - Joined city name (`citymst.CityName`)
   - All selected services (`selectedservicesmst` + `servicemst`)
-- [ ] Optional `?area=id` query param to filter by area
+- [x] Optional `?area=id` query param to filter by area
 
 #### `GET /api/salons/:id`
-- [ ] Public. Fetch single salon with services list and gallery images
+- [x] Public. Fetch single salon with services list and gallery images
 
 #### `GET /api/salons/:id/slots`
-- [ ] Public. Fetch salon's `OpenTime` and `CloseTime`
-- [ ] Generate hourly slots using `utils/generateSlots.js`
-- [ ] Return `{ slots: [...], salon, services }`
+- [x] Public. Fetch salon's `OpenTime` and `CloseTime`
+- [x] Generate hourly slots using `utils/generateSlots.js`
+- [x] Return `{ slots: [...], salon, services }`
 
 #### `generateSlots` utility (`utils/generateSlots.js`)
 ```js
@@ -319,78 +319,78 @@ function generateSlots(openTime, closeTime) {
 ### 3.2 Owner Controller (`controllers/ownerController.js`)
 
 #### `GET /api/owner/profile`
-- [ ] Protected (`requireOwner`)
-- [ ] Get owner user from DB using `id` from JWT
-- [ ] Get salon owned by this user
-- [ ] If no salon → return `{ needsSalon: true }`
-- [ ] Get bookings for today (default) or by date from query param `?date=YYYY-MM-DD`
-- [ ] Return `{ owner, salon, bookings }`
+- [x] Protected (`requireOwner`)
+- [x] Get owner user from DB using `id` from JWT
+- [x] Get salon owned by this user
+- [x] If no salon → return `{ needsSalon: true }`
+- [x] Get bookings for today (default) or by date from query param `?date=YYYY-MM-DD`
+- [x] Return `{ owner, salon, bookings }`
 
 #### `POST /api/owner/salon`
-- [ ] Protected (`requireOwner`) + Multer (single image)
-- [ ] Save salon with `Owner_id` from JWT
-- [ ] Redirect-equivalent: return salon ID
+- [x] Protected (`requireOwner`) + Multer (single image)
+- [x] Save salon with `Owner_id` from JWT
+- [x] Redirect-equivalent: return salon ID
 
 #### `PUT /api/owner/salon/:id`
-- [ ] Protected (`requireOwner`) + Multer (single image)
-- [ ] Validate `NumberOfSeats > 0`
-- [ ] Update salon fields
+- [x] Protected (`requireOwner`) + Multer (single image)
+- [x] Validate `NumberOfSeats > 0`
+- [x] Update salon fields
 
 #### `POST /api/owner/services`
-- [ ] Protected (`requireOwner`)
-- [ ] Get salon by owner's user ID
-- [ ] Insert into `selectedservicesmst` with `SalonId_id = salon.id`
+- [x] Protected (`requireOwner`)
+- [x] Get salon by owner's user ID
+- [x] Insert into `selectedservicesmst` with `SalonId_id = salon.id`
 
 #### `POST /api/owner/images`
-- [ ] Protected (`requireOwner`) + Multer (up to 5 images `array('images', 5)`)
-- [ ] Get salon by owner's user ID
-- [ ] Insert each uploaded file into `imagemst`
+- [x] Protected (`requireOwner`) + Multer (up to 5 images `array('images', 5)`)
+- [x] Get salon by owner's user ID
+- [x] Insert each uploaded file into `imagemst`
 
 #### `GET /api/owner/services`
-- [ ] Protected (`requireOwner`)
-- [ ] Return all services from `servicemst` (for dropdown) + all `selectedservicesmst` for this salon
+- [x] Protected (`requireOwner`)
+- [x] Return all services from `servicemst` (for dropdown) + all `selectedservicesmst` for this salon
 
 ### 3.3 Booking Controller (`controllers/bookingController.js`)
 
 #### `POST /api/bookings`
-- [ ] Protected (`requireUser`)
-- [ ] Extract: `salonId`, `serviceId`, `date`, `timeSlot` from body
-- [ ] Get service price from `selectedservicesmst`
-- [ ] Insert into `slotbookingmst` with `Status = 'Pending'`
-- [ ] Return success message: _"Your appointment is booked. Waiting for owner confirmation."_
+- [x] Protected (`requireUser`)
+- [x] Extract: `salonId`, `serviceId`, `date`, `timeSlot` from body
+- [x] Get service price from `selectedservicesmst`
+- [x] Insert into `slotbookingmst` with `Status = 'Pending'`
+- [x] Return success message: _"Your appointment is booked. Waiting for owner confirmation."_
 
 #### `GET /api/user/bookings`
-- [ ] Protected (`requireUser`)
-- [ ] Get all bookings for `UserId_id = userId` from JWT
-- [ ] Join with `selectedservicesmst`, `servicemst`, `salonmst`
-- [ ] Return bookings array
+- [x] Protected (`requireUser`)
+- [x] Get all bookings for `UserId_id = userId` from JWT
+- [x] Join with `selectedservicesmst`, `servicemst`, `salonmst`
+- [x] Return bookings array
 
 #### `PATCH /api/bookings/:id/cancel`
-- [ ] Protected (`requireUser`)
-- [ ] Fetch booking by id
-- [ ] Check `Status === 'Pending'`
-- [ ] Parse `TimeSlote` → extract start time → combine with `BookingDate`
-- [ ] Check: `appointmentDateTime - now >= 3 hours` → else return error
-- [ ] Update `Status = 'Cancelled'`
-- [ ] Return success/failure message
+- [x] Protected (`requireUser`)
+- [x] Fetch booking by id
+- [x] Check `Status === 'Pending'`
+- [x] Parse `TimeSlote` → extract start time → combine with `BookingDate`
+- [x] Check: `appointmentDateTime - now >= 3 hours` → else return error
+- [x] Update `Status = 'Cancelled'`
+- [x] Return success/failure message
 
 #### `PATCH /api/bookings/:id/status`
-- [ ] Protected (`requireOwner`)
-- [ ] Get `status` and optional `reason` from body
-- [ ] Update `slotbookingmst.Status` to `'Accepted'` or `'Rejected'`
-- [ ] If Accepted: send appointment confirmation email to user
-- [ ] If Rejected: send appointment rejection email with reason to user
+- [x] Protected (`requireOwner`)
+- [x] Get `status` and optional `reason` from body
+- [x] Update `slotbookingmst.Status` to `'Accepted'` or `'Rejected'`
+- [x] If Accepted: send appointment confirmation email to user
+- [x] If Rejected: send appointment rejection email with reason to user
 
 ### 3.4 User Controller (`controllers/userController.js`)
 
 #### `GET /api/user/profile`
-- [ ] Protected (`requireUser`)
-- [ ] Return user from `usermst` by id from JWT
+- [x] Protected (`requireUser`)
+- [x] Return user from `usermst` by id from JWT
 
 #### `PUT /api/user/profile`
-- [ ] Protected (`requireUser`) + Multer (single image)
-- [ ] Validate phone (10 digits)
-- [ ] Update `usermst` fields: Name, UserName, Email, PhoneNumber, Img
+- [x] Protected (`requireUser`) + Multer (single image)
+- [x] Validate phone (10 digits)
+- [x] Update `usermst` fields: Name, UserName, Email, PhoneNumber, Img
 
 ### ✅ Phase 3 Deliverables
 - All salon, owner, booking, user endpoints working
@@ -786,7 +786,7 @@ Configure Nodemailer with SMTP from `.env`. Implement all 8 email functions:
 ```
 Phase 1  [x] Project Setup & Database
 Phase 2  [x] Backend: Auth & Core APIs
-Phase 3  [ ] Backend: Owner & Booking APIs
+Phase 3  [x] Backend: Owner & Booking APIs
 Phase 4  [ ] Frontend: Public Pages
 Phase 5  [ ] Frontend: User Dashboard
 Phase 6  [ ] Frontend: Owner Dashboard

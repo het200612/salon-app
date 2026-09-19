@@ -1,4 +1,10 @@
-// Route stubs — will be implemented in Phase 3
 const express = require('express');
 const router  = express.Router();
+const salonController = require('../controllers/salonController');
+
+// Public salon routes
+router.get('/', salonController.getSalons);
+router.get('/:id', salonController.getSalonById);
+router.get('/:id/slots', salonController.getSalonSlots);
+
 module.exports = router;
