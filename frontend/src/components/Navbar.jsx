@@ -1,12 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import logoImg from '../assets/logo.png';
 
 export const Navbar = () => {
   const { isAuthenticated, user, role, logout } = useAuth();
   const navigate = useNavigate();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const getDashboardLink = () => {
     const normalizedRole = (role || '').toLowerCase();
@@ -22,13 +20,13 @@ export const Navbar = () => {
 
   return (
     <nav style={{
-      backgroundColor: 'rgba(15, 16, 21, 0.95)',
-      backdropFilter: 'blur(12px)',
-      borderBottom: '1px solid var(--color-border)',
+      backgroundColor: '#ffffff',
+      boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08)',
+      padding: '0.8rem 2rem',
       position: 'sticky',
       top: 0,
       zIndex: 1000,
-      padding: '0.8rem 2rem',
+      width: '100%',
     }}>
       <div style={{
         maxWidth: '1200px',
@@ -37,115 +35,138 @@ export const Navbar = () => {
         alignItems: 'center',
         justifyContent: 'space-between',
       }}>
-        {/* Brand Logo */}
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <img
-            src={logoImg}
-            alt="Hair Harmony Logo"
-            style={{ height: '38px', width: 'auto', objectFit: 'contain' }}
-            onError={(e) => { e.target.style.display = 'none'; }}
-          />
-          <span style={{
-            fontFamily: 'var(--font-serif)',
-            fontSize: '1.4rem',
+        {/* Brand in Ephesis cursive gold font */}
+        <Link
+          to="/"
+          style={{
+            fontFamily: "'Ephesis', cursive, serif",
+            fontSize: '2.5rem',
             fontWeight: '700',
-            letterSpacing: '0.5px',
-            color: 'var(--color-primary)',
-          }}>
-            Hair Harmony
-          </span>
+            color: '#daa520',
+            textDecoration: 'none',
+            lineHeight: 1,
+            letterSpacing: '1px',
+          }}
+        >
+          Hair Harmony
         </Link>
 
-        {/* Desktop Nav Links */}
+        {/* Navigation Links */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           gap: '2rem',
+          fontFamily: "'Poppins', sans-serif",
         }}>
-          <Link to="/" style={{ color: 'var(--color-text-main)', fontSize: '0.95rem', fontWeight: '500', transition: 'var(--transition-fast)' }}>
+          <Link
+            to="/"
+            style={{
+              color: '#121212',
+              fontWeight: '600',
+              fontSize: '1rem',
+              textDecoration: 'none',
+              transition: 'color 0.2s',
+            }}
+            onMouseEnter={(e) => { e.target.style.color = '#daa520'; }}
+            onMouseLeave={(e) => { e.target.style.color = '#121212'; }}
+          >
             Home
           </Link>
-          <a href="/#salons" style={{ color: 'var(--color-text-main)', fontSize: '0.95rem', fontWeight: '500' }}>
-            Salons
-          </a>
-          <a href="/#about" style={{ color: 'var(--color-text-main)', fontSize: '0.95rem', fontWeight: '500' }}>
+          <a
+            href="/#about"
+            style={{
+              color: '#121212',
+              fontWeight: '600',
+              fontSize: '1rem',
+              textDecoration: 'none',
+              transition: 'color 0.2s',
+            }}
+            onMouseEnter={(e) => { e.target.style.color = '#daa520'; }}
+            onMouseLeave={(e) => { e.target.style.color = '#121212'; }}
+          >
             About Us
           </a>
-          <a href="/#contact" style={{ color: 'var(--color-text-main)', fontSize: '0.95rem', fontWeight: '500' }}>
+          <a
+            href="/#contact"
+            style={{
+              color: '#121212',
+              fontWeight: '600',
+              fontSize: '1rem',
+              textDecoration: 'none',
+              transition: 'color 0.2s',
+            }}
+            onMouseEnter={(e) => { e.target.style.color = '#daa520'; }}
+            onMouseLeave={(e) => { e.target.style.color = '#121212'; }}
+          >
             Contact
           </a>
 
-          {/* Auth Actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginLeft: '1rem' }}>
-            {isAuthenticated ? (
-              <>
-                <Link
-                  to={getDashboardLink()}
-                  style={{
-                    backgroundColor: 'var(--color-surface)',
-                    border: '1px solid var(--color-border)',
-                    padding: '0.5rem 1rem',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '0.9rem',
-                    fontWeight: '600',
-                    color: 'var(--color-primary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                  }}
-                >
-                  <span>Dashboard ({user?.name || role})</span>
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  style={{
-                    backgroundColor: 'transparent',
-                    border: '1px solid var(--color-border)',
-                    color: 'var(--color-text-muted)',
-                    padding: '0.5rem 0.9rem',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '0.85rem',
-                    cursor: 'pointer',
-                    transition: 'var(--transition-fast)',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-danger)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-text-muted)'; }}
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  to="/login"
-                  style={{
-                    color: 'var(--color-text-main)',
-                    fontSize: '0.9rem',
-                    fontWeight: '600',
-                    padding: '0.5rem 1rem',
-                  }}
-                >
-                  Sign In
-                </Link>
-                <Link
-                  to="/register"
-                  style={{
-                    backgroundColor: 'var(--color-primary)',
-                    color: '#0F1015',
-                    fontSize: '0.9rem',
-                    fontWeight: '600',
-                    padding: '0.5rem 1.2rem',
-                    borderRadius: 'var(--radius-sm)',
-                    transition: 'var(--transition-fast)',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'var(--color-primary)'; }}
-                >
-                  Register
-                </Link>
-              </>
-            )}
-          </div>
+          {isAuthenticated ? (
+            <>
+              <Link
+                to={getDashboardLink()}
+                style={{
+                  color: '#daa520',
+                  fontWeight: '600',
+                  fontSize: '0.95rem',
+                  textDecoration: 'none',
+                  border: '1px solid #daa520',
+                  padding: '6px 14px',
+                  borderRadius: '4px',
+                }}
+              >
+                Dashboard ({user?.name || role})
+              </Link>
+              <button
+                onClick={handleLogout}
+                style={{
+                  backgroundColor: 'transparent',
+                  border: '1px solid #ddd',
+                  color: '#666',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  fontSize: '0.9rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#dc3545'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = '#666'; }}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                style={{
+                  color: '#121212',
+                  fontWeight: '600',
+                  fontSize: '1rem',
+                  textDecoration: 'none',
+                  transition: 'color 0.2s',
+                }}
+                onMouseEnter={(e) => { e.target.style.color = '#daa520'; }}
+                onMouseLeave={(e) => { e.target.style.color = '#121212'; }}
+              >
+                Login
+              </Link>
+              <Link
+                to="/register"
+                style={{
+                  color: '#121212',
+                  fontWeight: '600',
+                  fontSize: '1rem',
+                  textDecoration: 'none',
+                  transition: 'color 0.2s',
+                }}
+                onMouseEnter={(e) => { e.target.style.color = '#daa520'; }}
+                onMouseLeave={(e) => { e.target.style.color = '#121212'; }}
+              >
+                Register
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+import authBg from '../assets/auth-bg.jpg';
 
 export const RegisterPage = () => {
   const navigate = useNavigate();
@@ -13,10 +13,9 @@ export const RegisterPage = () => {
     email: '',
     phoneNumber: '',
     password: '',
-    usertype: 'User', // 'User' | 'Owner'
+    usertype: 'Owner', // Default 'Owner' as shown in screenshot
   });
   const [profileImg, setProfileImg] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -27,10 +26,8 @@ export const RegisterPage = () => {
   };
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setProfileImg(file);
-      setPreviewUrl(URL.createObjectURL(file));
+    if (e.target.files && e.target.files[0]) {
+      setProfileImg(e.target.files[0]);
     }
   };
 
@@ -39,7 +36,6 @@ export const RegisterPage = () => {
     setErrorMsg('');
     setSuccessMsg('');
 
-    // Client-side validations
     if (!/^\d{10}$/.test(formData.phoneNumber)) {
       setErrorMsg('Phone number must be exactly 10 digits.');
       return;
@@ -69,19 +65,19 @@ export const RegisterPage = () => {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      setSuccessMsg(res.data.message || 'Registration successful! Redirecting to login...');
+      setSuccessMsg(res.data.message || 'Registered successfully!');
       setTimeout(() => {
         navigate('/login', {
           state: {
             message: formData.usertype === 'Owner'
-              ? 'Owner account registered! Waiting for administrator approval.'
-              : 'Registration successful! Please log in.',
+              ? 'Owner registered successfully! Waiting for admin verification.'
+              : 'Registered successfully! Please log in.',
           },
         });
-      }, 2000);
+      }, 1500);
     } catch (err) {
       console.error('Registration error:', err);
-      const msg = err.response?.data?.message || 'Registration failed. Please check your information.';
+      const msg = err.response?.data?.message || 'Registration failed. Please check your details.';
       setErrorMsg(msg);
     } finally {
       setLoading(false);
@@ -89,94 +85,80 @@ export const RegisterPage = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--color-bg)' }}>
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      position: 'relative',
+      fontFamily: "'Poppins', sans-serif",
+    }}>
+      {/* Background Image & Overlay */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundImage: `url(${authBg})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        zIndex: -2,
+      }} />
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.55)',
+        zIndex: -1,
+      }} />
+
       <Navbar />
 
+      {/* Main Container */}
       <div style={{
         flexGrow: 1,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '3rem 1.5rem',
+        padding: '2.5rem 1rem',
       }}>
-        <div style={{
-          width: '100%',
-          maxWidth: '520px',
-          backgroundColor: 'var(--color-card)',
-          border: '1px solid var(--color-border)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '2.5rem',
-          boxShadow: 'var(--shadow-card)',
-        }}>
-          {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: '1.8rem' }}>
-            <span style={{ color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '2px', fontSize: '0.75rem', fontWeight: '700' }}>
-              Join Hair Harmony
-            </span>
-            <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', color: 'var(--color-text-main)', marginTop: '0.3rem' }}>
-              Create Your Account
-            </h1>
-            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginTop: '0.4rem' }}>
-              Register as a customer or salon owner
-            </p>
-          </div>
-
-          {/* Account Type Toggle */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            backgroundColor: 'var(--color-surface)',
-            padding: '4px',
-            borderRadius: 'var(--radius-sm)',
+        <form
+          onSubmit={handleSubmit}
+          style={{
+            width: '100%',
+            maxWidth: '480px',
+            backgroundColor: '#ffffff',
+            borderRadius: '10px',
+            boxShadow: '0 0 25px rgba(0, 0, 0, 0.25)',
+            padding: '2rem 2.2rem',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          {/* Title */}
+          <h1 style={{
+            color: '#333333',
+            fontSize: '1.8rem',
+            fontWeight: '600',
             marginBottom: '1.5rem',
-            border: '1px solid var(--color-border)',
+            textAlign: 'center',
           }}>
-            <button
-              type="button"
-              onClick={() => setFormData((prev) => ({ ...prev, usertype: 'User' }))}
-              style={{
-                padding: '0.6rem',
-                fontSize: '0.9rem',
-                fontWeight: '600',
-                borderRadius: '4px',
-                border: 'none',
-                cursor: 'pointer',
-                backgroundColor: formData.usertype === 'User' ? 'var(--color-primary)' : 'transparent',
-                color: formData.usertype === 'User' ? '#0F1015' : 'var(--color-text-muted)',
-                transition: 'var(--transition-fast)',
-              }}
-            >
-              Customer / User
-            </button>
-            <button
-              type="button"
-              onClick={() => setFormData((prev) => ({ ...prev, usertype: 'Owner' }))}
-              style={{
-                padding: '0.6rem',
-                fontSize: '0.9rem',
-                fontWeight: '600',
-                borderRadius: '4px',
-                border: 'none',
-                cursor: 'pointer',
-                backgroundColor: formData.usertype === 'Owner' ? 'var(--color-primary)' : 'transparent',
-                color: formData.usertype === 'Owner' ? '#0F1015' : 'var(--color-text-muted)',
-                transition: 'var(--transition-fast)',
-              }}
-            >
-              Salon Owner
-            </button>
-          </div>
+            Sign Up
+          </h1>
 
-          {/* Error & Success Messages */}
+          {/* Error / Success Feedback */}
           {errorMsg && (
             <div style={{
-              backgroundColor: 'rgba(239, 68, 68, 0.15)',
-              border: '1px solid rgba(239, 68, 68, 0.4)',
-              color: '#FCA5A5',
-              padding: '0.75rem 1rem',
-              borderRadius: 'var(--radius-sm)',
+              backgroundColor: '#fee2e2',
+              border: '1px solid #f87171',
+              color: '#b91c1c',
+              padding: '0.6rem 0.8rem',
+              borderRadius: '5px',
               fontSize: '0.85rem',
-              marginBottom: '1.2rem',
+              marginBottom: '1rem',
+              textAlign: 'center',
             }}>
               {errorMsg}
             </div>
@@ -184,202 +166,230 @@ export const RegisterPage = () => {
 
           {successMsg && (
             <div style={{
-              backgroundColor: 'rgba(16, 185, 129, 0.15)',
-              border: '1px solid rgba(16, 185, 129, 0.4)',
-              color: '#6EE7B7',
-              padding: '0.75rem 1rem',
-              borderRadius: 'var(--radius-sm)',
+              backgroundColor: '#d1fae5',
+              border: '1px solid #34d399',
+              color: '#065f46',
+              padding: '0.6rem 0.8rem',
+              borderRadius: '5px',
               fontSize: '0.85rem',
-              marginBottom: '1.2rem',
+              marginBottom: '1rem',
+              textAlign: 'center',
             }}>
               {successMsg}
             </div>
           )}
 
-          {/* Registration Form */}
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '0.3rem', fontWeight: '500' }}>
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="John Doe"
-                  style={{
-                    width: '100%',
-                    backgroundColor: 'var(--color-surface)',
-                    border: '1px solid var(--color-border)',
-                    color: 'var(--color-text-main)',
-                    padding: '0.7rem 0.9rem',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '0.9rem',
-                    outline: 'none',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '0.3rem', fontWeight: '500' }}>
-                  Username
-                </label>
-                <input
-                  type="text"
-                  required
-                  name="userName"
-                  value={formData.userName}
-                  onChange={handleChange}
-                  placeholder="johndoe"
-                  style={{
-                    width: '100%',
-                    backgroundColor: 'var(--color-surface)',
-                    border: '1px solid var(--color-border)',
-                    color: 'var(--color-text-main)',
-                    padding: '0.7rem 0.9rem',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '0.9rem',
-                    outline: 'none',
-                  }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '0.3rem', fontWeight: '500' }}>
-                Email Address
-              </label>
-              <input
-                type="email"
-                required
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="john@example.com"
-                style={{
-                  width: '100%',
-                  backgroundColor: 'var(--color-surface)',
-                  border: '1px solid var(--color-border)',
-                  color: 'var(--color-text-main)',
-                  padding: '0.7rem 0.9rem',
-                  borderRadius: 'var(--radius-sm)',
-                  fontSize: '0.9rem',
-                  outline: 'none',
-                }}
-              />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '0.3rem', fontWeight: '500' }}>
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  required
-                  maxLength={10}
-                  name="phoneNumber"
-                  value={formData.phoneNumber}
-                  onChange={handleChange}
-                  placeholder="9876543210"
-                  style={{
-                    width: '100%',
-                    backgroundColor: 'var(--color-surface)',
-                    border: '1px solid var(--color-border)',
-                    color: 'var(--color-text-main)',
-                    padding: '0.7rem 0.9rem',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '0.9rem',
-                    outline: 'none',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '0.3rem', fontWeight: '500' }}>
-                  Password
-                </label>
-                <input
-                  type="password"
-                  required
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Min 8 chars, A-Z, 0-9, @"
-                  style={{
-                    width: '100%',
-                    backgroundColor: 'var(--color-surface)',
-                    border: '1px solid var(--color-border)',
-                    color: 'var(--color-text-main)',
-                    padding: '0.7rem 0.9rem',
-                    borderRadius: 'var(--radius-sm)',
-                    fontSize: '0.9rem',
-                    outline: 'none',
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Profile Picture Upload */}
-            <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '0.3rem', fontWeight: '500' }}>
-                Profile Photo (Optional)
-              </label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                {previewUrl && (
-                  <img
-                    src={previewUrl}
-                    alt="Preview"
-                    style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-primary)' }}
-                  />
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  style={{
-                    fontSize: '0.85rem',
-                    color: 'var(--color-text-muted)',
-                  }}
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
+          {/* Name */}
+          <div style={{ marginBottom: '0.9rem' }}>
+            <label style={{ display: 'block', fontSize: '0.85rem', color: '#333', fontWeight: '500', marginBottom: '0.2rem' }}>
+              Name:
+            </label>
+            <input
+              type="text"
+              required
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
               style={{
-                backgroundColor: 'var(--color-primary)',
-                color: '#0F1015',
-                fontWeight: '700',
-                padding: '0.85rem',
-                borderRadius: 'var(--radius-sm)',
-                border: 'none',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                fontSize: '1rem',
-                marginTop: '0.5rem',
-                transition: 'var(--transition-fast)',
-                opacity: loading ? 0.7 : 1,
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '5px',
+                fontSize: '0.9rem',
+                color: '#333',
+                backgroundColor: '#fff',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+              onFocus={(e) => { e.target.style.borderColor = '#ffd700'; }}
+              onBlur={(e) => { e.target.style.borderColor = '#ddd'; }}
+            />
+          </div>
+
+          {/* Username */}
+          <div style={{ marginBottom: '0.9rem' }}>
+            <label style={{ display: 'block', fontSize: '0.85rem', color: '#333', fontWeight: '500', marginBottom: '0.2rem' }}>
+              Username:
+            </label>
+            <input
+              type="text"
+              required
+              name="userName"
+              value={formData.userName}
+              onChange={handleChange}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '5px',
+                fontSize: '0.9rem',
+                color: '#333',
+                backgroundColor: '#fff',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+              onFocus={(e) => { e.target.style.borderColor = '#ffd700'; }}
+              onBlur={(e) => { e.target.style.borderColor = '#ddd'; }}
+            />
+          </div>
+
+          {/* Email */}
+          <div style={{ marginBottom: '0.9rem' }}>
+            <label style={{ display: 'block', fontSize: '0.85rem', color: '#333', fontWeight: '500', marginBottom: '0.2rem' }}>
+              Email:
+            </label>
+            <input
+              type="email"
+              required
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '5px',
+                fontSize: '0.9rem',
+                color: '#333',
+                backgroundColor: '#fff',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+              onFocus={(e) => { e.target.style.borderColor = '#ffd700'; }}
+              onBlur={(e) => { e.target.style.borderColor = '#ddd'; }}
+            />
+          </div>
+
+          {/* Phone Number */}
+          <div style={{ marginBottom: '0.9rem' }}>
+            <label style={{ display: 'block', fontSize: '0.85rem', color: '#333', fontWeight: '500', marginBottom: '0.2rem' }}>
+              Phonenumber:
+            </label>
+            <input
+              type="tel"
+              required
+              maxLength={10}
+              name="phoneNumber"
+              value={formData.phoneNumber}
+              onChange={handleChange}
+              placeholder="Enter 10-digit phone number"
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '5px',
+                fontSize: '0.9rem',
+                color: '#333',
+                backgroundColor: '#fff',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+              onFocus={(e) => { e.target.style.borderColor = '#ffd700'; }}
+              onBlur={(e) => { e.target.style.borderColor = '#ddd'; }}
+            />
+          </div>
+
+          {/* Password */}
+          <div style={{ marginBottom: '0.9rem' }}>
+            <label style={{ display: 'block', fontSize: '0.85rem', color: '#333', fontWeight: '500', marginBottom: '0.2rem' }}>
+              Password:
+            </label>
+            <input
+              type="password"
+              required
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '5px',
+                fontSize: '0.9rem',
+                color: '#333',
+                backgroundColor: '#fff',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+              onFocus={(e) => { e.target.style.borderColor = '#ffd700'; }}
+              onBlur={(e) => { e.target.style.borderColor = '#ddd'; }}
+            />
+          </div>
+
+          {/* Usertype Dropdown */}
+          <div style={{ marginBottom: '0.9rem' }}>
+            <label style={{ display: 'block', fontSize: '0.85rem', color: '#333', fontWeight: '500', marginBottom: '0.2rem' }}>
+              Usertype:
+            </label>
+            <select
+              name="usertype"
+              value={formData.usertype}
+              onChange={handleChange}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '5px',
+                fontSize: '0.9rem',
+                color: '#333',
+                backgroundColor: '#fff',
+                outline: 'none',
+                cursor: 'pointer',
+                boxSizing: 'border-box',
               }}
             >
-              {loading ? 'Submitting Registration...' : `Register as ${formData.usertype}`}
-            </button>
-          </form>
+              <option value="Owner">Owner</option>
+              <option value="User">User</option>
+            </select>
+          </div>
 
-          {/* Footer Login Link */}
-          <div style={{ textAlign: 'center', marginTop: '1.5rem', paddingTop: '1.2rem', borderTop: '1px solid var(--color-border)', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
-            Already have an account?{' '}
-            <Link to="/login" style={{ color: 'var(--color-primary)', fontWeight: '600' }}>
-              Sign In
+          {/* Img File Picker */}
+          <div style={{ marginBottom: '1.2rem' }}>
+            <label style={{ display: 'block', fontSize: '0.85rem', color: '#333', fontWeight: '500', marginBottom: '0.2rem' }}>
+              Img:
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              style={{
+                width: '100%',
+                fontSize: '0.85rem',
+                color: '#555',
+              }}
+            />
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              width: '100%',
+              backgroundColor: '#d1a208',
+              color: '#ffffff',
+              padding: '12px',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontSize: '1.1rem',
+              fontWeight: '600',
+              transition: 'background-color 0.2s',
+            }}
+            onMouseEnter={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#b98f07'; }}
+            onMouseLeave={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#d1a208'; }}
+          >
+            {loading ? 'Submitting...' : 'Register'}
+          </button>
+
+          {/* Bottom Link */}
+          <div style={{ textAlign: 'center', marginTop: '1.2rem', fontSize: '0.85rem' }}>
+            <Link to="/login" style={{ color: '#d1a208', textDecoration: 'none' }}>
+              Already have an account?
             </Link>
           </div>
-        </div>
+        </form>
       </div>
-
-      <Footer />
     </div>
   );
 };

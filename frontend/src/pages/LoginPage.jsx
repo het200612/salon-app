@@ -3,7 +3,8 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+import authBg from '../assets/auth-bg.jpg';
+import logoEmblem from '../assets/logo-emblem.png';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
@@ -12,7 +13,7 @@ export const LoginPage = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('User'); // 'User', 'Owner', 'Admin'
+  const [role, setRole] = useState('User'); // 'Admin', 'User', 'Owner'
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(location.state?.message || '');
 
@@ -42,7 +43,7 @@ export const LoginPage = () => {
       navigate(redirectPath, { replace: true });
     } catch (err) {
       console.error('Login error:', err);
-      const msg = err.response?.data?.message || 'Login failed. Please verify your email and password.';
+      const msg = err.response?.data?.message || 'Username or password is incorrect';
       setErrorMsg(msg);
     } finally {
       setLoading(false);
@@ -50,182 +51,237 @@ export const LoginPage = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--color-bg)' }}>
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      position: 'relative',
+      fontFamily: "'Poppins', sans-serif",
+    }}>
+      {/* Background Image & Overlay */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundImage: `url(${authBg})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        zIndex: -2,
+      }} />
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.55)',
+        zIndex: -1,
+      }} />
+
       <Navbar />
 
+      {/* Main Container */}
       <div style={{
         flexGrow: 1,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '3rem 1.5rem',
+        padding: '2rem 1rem',
       }}>
-        <div style={{
-          width: '100%',
-          maxWidth: '450px',
-          backgroundColor: 'var(--color-card)',
-          border: '1px solid var(--color-border)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '2.5rem',
-          boxShadow: 'var(--shadow-card)',
-        }}>
-          {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <span style={{ color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '2px', fontSize: '0.75rem', fontWeight: '700' }}>
-              Welcome Back
-            </span>
-            <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', color: 'var(--color-text-main)', marginTop: '0.3rem' }}>
-              Sign In to Your Account
-            </h1>
-            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginTop: '0.5rem' }}>
-              Choose your role and enter credentials
-            </p>
-          </div>
-
-          {/* Role Tabs */}
+        <form
+          onSubmit={handleSubmit}
+          style={{
+            width: '100%',
+            maxWidth: '460px',
+            backgroundColor: '#ffffff',
+            borderRadius: '10px',
+            boxShadow: '0 0 25px rgba(0, 0, 0, 0.25)',
+            padding: '2.5rem 2rem',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+        >
+          {/* Circular Logo on top */}
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr 1fr',
-            backgroundColor: 'var(--color-surface)',
-            padding: '4px',
-            borderRadius: 'var(--radius-sm)',
-            marginBottom: '1.5rem',
-            border: '1px solid var(--color-border)',
+            width: '4.5rem',
+            height: '4.5rem',
+            borderRadius: '50%',
+            border: '1px solid #1a1a1a',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: '1rem',
+            overflow: 'hidden',
+            backgroundColor: '#ffffff',
           }}>
-            {['User', 'Owner', 'Admin'].map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => { setRole(r); setErrorMsg(''); }}
-                style={{
-                  padding: '0.5rem',
-                  fontSize: '0.85rem',
-                  fontWeight: '600',
-                  borderRadius: '4px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  backgroundColor: role === r ? 'var(--color-primary)' : 'transparent',
-                  color: role === r ? '#0F1015' : 'var(--color-text-muted)',
-                  transition: 'var(--transition-fast)',
-                }}
-              >
-                {r}
-              </button>
-            ))}
+            <img
+              src={logoEmblem}
+              alt="Logo Emblem"
+              style={{ width: '80%', height: '80%', objectFit: 'contain' }}
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
           </div>
 
-          {/* Error Message */}
+          {/* Heading */}
+          <h1 style={{
+            color: '#ffd700',
+            fontSize: '2rem',
+            fontWeight: '600',
+            marginBottom: '1.2rem',
+            textAlign: 'center',
+          }}>
+            Login
+          </h1>
+
+          {/* Error message */}
           {errorMsg && (
             <div style={{
-              backgroundColor: 'rgba(239, 68, 68, 0.15)',
-              border: '1px solid rgba(239, 68, 68, 0.4)',
-              color: '#FCA5A5',
-              padding: '0.75rem 1rem',
-              borderRadius: 'var(--radius-sm)',
+              width: '100%',
+              backgroundColor: '#fee2e2',
+              border: '1px solid #f87171',
+              color: '#b91c1c',
+              padding: '0.6rem 0.8rem',
+              borderRadius: '5px',
               fontSize: '0.85rem',
-              marginBottom: '1.5rem',
+              marginBottom: '1rem',
+              textAlign: 'center',
             }}>
               {errorMsg}
             </div>
           )}
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '0.4rem', fontWeight: '500' }}>
-                Email Address
-              </label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder={role === 'Admin' ? 'admin@gmail.com' : 'you@example.com'}
-                style={{
-                  width: '100%',
-                  backgroundColor: 'var(--color-surface)',
-                  border: '1px solid var(--color-border)',
-                  color: 'var(--color-text-main)',
-                  padding: '0.75rem 1rem',
-                  borderRadius: 'var(--radius-sm)',
-                  fontSize: '0.95rem',
-                  outline: 'none',
-                  transition: 'var(--transition-fast)',
-                }}
-                onFocus={(e) => { e.target.style.borderColor = 'var(--color-primary)'; }}
-                onBlur={(e) => { e.target.style.borderColor = 'var(--color-border)'; }}
-              />
+          {/* Select Role */}
+          <div style={{ width: '100%', marginBottom: '1.2rem' }}>
+            <div style={{ fontSize: '0.9rem', color: '#555', fontWeight: '600', textAlign: 'center', marginBottom: '0.5rem' }}>
+              Select Role
             </div>
-
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-                <label style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontWeight: '500' }}>
-                  Password
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '1.5rem',
+            }}>
+              {['Admin', 'User', 'Owner'].map((r) => (
+                <label
+                  key={r}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    color: '#333',
+                    fontWeight: '500',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="role"
+                    value={r}
+                    checked={role === r}
+                    onChange={() => setRole(r)}
+                    style={{
+                      accentColor: '#d1a208',
+                      width: '16px',
+                      height: '16px',
+                      cursor: 'pointer',
+                    }}
+                  />
+                  <span>{r}</span>
                 </label>
-                {role !== 'Admin' && (
-                  <Link to="/forgot-password" style={{ fontSize: '0.8rem', color: 'var(--color-primary)' }}>
-                    Forgot password?
-                  </Link>
-                )}
-              </div>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                style={{
-                  width: '100%',
-                  backgroundColor: 'var(--color-surface)',
-                  border: '1px solid var(--color-border)',
-                  color: 'var(--color-text-main)',
-                  padding: '0.75rem 1rem',
-                  borderRadius: 'var(--radius-sm)',
-                  fontSize: '0.95rem',
-                  outline: 'none',
-                  transition: 'var(--transition-fast)',
-                }}
-                onFocus={(e) => { e.target.style.borderColor = 'var(--color-primary)'; }}
-                onBlur={(e) => { e.target.style.borderColor = 'var(--color-border)'; }}
-              />
+              ))}
             </div>
+          </div>
 
-            <button
-              type="submit"
-              disabled={loading}
+          {/* Email Input */}
+          <div style={{ width: '100%', marginBottom: '1rem' }}>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
               style={{
-                backgroundColor: 'var(--color-primary)',
-                color: '#0F1015',
-                fontWeight: '700',
-                padding: '0.85rem',
-                borderRadius: 'var(--radius-sm)',
-                border: 'none',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                fontSize: '1rem',
-                marginTop: '0.5rem',
-                transition: 'var(--transition-fast)',
-                opacity: loading ? 0.7 : 1,
+                width: '100%',
+                padding: '12px 14px',
+                border: '1px solid #ddd',
+                borderRadius: '5px',
+                fontSize: '0.95rem',
+                color: '#333',
+                backgroundColor: '#fff',
+                outline: 'none',
+                boxSizing: 'border-box',
               }}
-              onMouseEnter={(e) => { if (!loading) e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'; }}
-              onMouseLeave={(e) => { if (!loading) e.currentTarget.style.backgroundColor = 'var(--color-primary)'; }}
-            >
-              {loading ? 'Authenticating...' : `Sign In as ${role}`}
-            </button>
-          </form>
+              onFocus={(e) => { e.target.style.borderColor = '#ffd700'; }}
+              onBlur={(e) => { e.target.style.borderColor = '#ddd'; }}
+            />
+          </div>
 
-          {/* Footer Register Link */}
-          {role !== 'Admin' && (
-            <div style={{ textAlign: 'center', marginTop: '1.8rem', paddingTop: '1.2rem', borderTop: '1px solid var(--color-border)', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
-              Don't have an account yet?{' '}
-              <Link to="/register" style={{ color: 'var(--color-primary)', fontWeight: '600' }}>
-                Create Account
+          {/* Password Input */}
+          <div style={{ width: '100%', marginBottom: '1.2rem' }}>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                border: '1px solid #ddd',
+                borderRadius: '5px',
+                fontSize: '0.95rem',
+                color: '#333',
+                backgroundColor: '#fff',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+              onFocus={(e) => { e.target.style.borderColor = '#ffd700'; }}
+              onBlur={(e) => { e.target.style.borderColor = '#ddd'; }}
+            />
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              width: '100%',
+              backgroundColor: '#d1a208',
+              color: '#ffffff',
+              padding: '12px',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontSize: '1.1rem',
+              fontWeight: '600',
+              transition: 'background-color 0.2s',
+            }}
+            onMouseEnter={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#b98f07'; }}
+            onMouseLeave={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#d1a208'; }}
+          >
+            {loading ? 'Logging in...' : 'Login'}
+          </button>
+
+          {/* Bottom Links */}
+          <div style={{ textAlign: 'center', marginTop: '1.2rem', fontSize: '0.85rem' }}>
+            <div>
+              <Link to="/register" style={{ color: '#d1a208', textDecoration: 'none' }}>
+                Don't have an account? Register
               </Link>
             </div>
-          )}
-        </div>
+            {role !== 'Admin' && (
+              <div style={{ marginTop: '0.4rem' }}>
+                <Link to="/forgot-password" style={{ color: '#666', textDecoration: 'none' }}>
+                  Forgot password?
+                </Link>
+              </div>
+            )}
+          </div>
+        </form>
       </div>
-
-      <Footer />
     </div>
   );
 };
