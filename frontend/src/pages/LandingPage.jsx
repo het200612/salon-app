@@ -65,17 +65,22 @@ export const LandingPage = () => {
 
   const fetchAreas = async () => {
     try {
-      const res = await api.get('/salons');
-      if (res.data) {
-        const uniqueAreas = [];
-        const map = new Map();
-        res.data.forEach((s) => {
-          if (s.Area_id && !map.has(s.Area_id)) {
-            map.set(s.Area_id, true);
-            uniqueAreas.push({ id: s.Area_id, name: s.AreaName || `Area #${s.Area_id}` });
-          }
-        });
-        setAreas(uniqueAreas);
+      const res = await api.get('/salons/areas');
+      if (res.data && res.data.length > 0) {
+        setAreas(res.data);
+      } else {
+        const salonsRes = await api.get('/salons');
+        if (salonsRes.data) {
+          const uniqueAreas = [];
+          const map = new Map();
+          salonsRes.data.forEach((s) => {
+            if (s.Area_id && !map.has(s.Area_id)) {
+              map.set(s.Area_id, true);
+              uniqueAreas.push({ id: s.Area_id, AreaName: s.AreaName || `Area #${s.Area_id}` });
+            }
+          });
+          setAreas(uniqueAreas);
+        }
       }
     } catch (err) {
       console.error('Error loading areas:', err);
@@ -122,7 +127,7 @@ export const LandingPage = () => {
           </div>
         ))}
 
-        {/* Carousel Text Content */}
+        {/* Carousel Text Content & Floating Search Bar */}
         <div style={{
           position: 'absolute',
           top: '50%',
@@ -137,7 +142,7 @@ export const LandingPage = () => {
             fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)',
             fontWeight: '700',
             color: '#ffffff',
-            marginBottom: '1rem',
+            marginBottom: '0.8rem',
             lineHeight: 1.2,
           }}>
             {slides[currentSlide].title}
@@ -147,10 +152,111 @@ export const LandingPage = () => {
             color: '#e0e0e0',
             fontWeight: '400',
             maxWidth: '650px',
-            margin: '0 auto',
+            margin: '0 auto 2rem',
           }}>
             {slides[currentSlide].subtitle}
           </p>
+
+          {/* Floating White Search Card */}
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '10px',
+            padding: '1.25rem 1.5rem',
+            boxShadow: '0 12px 35px rgba(0, 0, 0, 0.35)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem',
+            width: '100%',
+            boxSizing: 'border-box',
+          }}>
+            {/* Area Dropdown */}
+            <div style={{ flex: 1, position: 'relative' }}>
+              <select
+                value={selectedArea}
+                onChange={(e) => setSelectedArea(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.85rem 1.25rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '0.95rem',
+                  color: selectedArea ? '#111827' : '#6b7280',
+                  backgroundColor: '#ffffff',
+                  outline: 'none',
+                  cursor: 'pointer',
+                  fontFamily: "'Poppins', sans-serif",
+                  boxSizing: 'border-box',
+                }}
+              >
+                <option value="">Select Area</option>
+                {areas.map((area) => (
+                  <option key={area.id} value={area.id}>
+                    {area.AreaName || area.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Search Salons Button */}
+            <button
+              onClick={() => {
+                fetchSalons(selectedArea);
+                const section = document.getElementById('salons-section');
+                if (section) {
+                  section.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              style={{
+                backgroundColor: '#ffd700',
+                color: '#000000',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '0.85rem 2.2rem',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                fontFamily: "'Poppins', sans-serif",
+                whiteSpace: 'nowrap',
+                transition: 'background-color 0.2s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#f5c500'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#ffd700'; }}
+            >
+              Search Salons
+            </button>
+
+            {/* Location Navigation Arrow Icon Button */}
+            <button
+              type="button"
+              onClick={() => {
+                if (areas.length > 0) {
+                  setSelectedArea(areas[0].id);
+                  fetchSalons(areas[0].id);
+                }
+              }}
+              title="Use Location"
+              style={{
+                backgroundColor: '#ffffff',
+                border: '1.5px solid #3b82f6',
+                borderRadius: '6px',
+                width: '46px',
+                height: '46px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: '#2563eb',
+                flexShrink: 0,
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#eff6ff'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#ffffff'; }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#2563eb">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Carousel Left / Right Arrows */}
@@ -201,7 +307,7 @@ export const LandingPage = () => {
       </div>
 
       {/* ─── Find Salons Near You ──────────────────────────────────────────────── */}
-      <section style={{ padding: '4rem 2rem', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
+      <section id="salons-section" style={{ padding: '4rem 2rem', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -239,7 +345,7 @@ export const LandingPage = () => {
               <option value="">All Locations</option>
               {areas.map((area) => (
                 <option key={area.id} value={area.id}>
-                  {area.name}
+                  {area.AreaName || area.name}
                 </option>
               ))}
             </select>
