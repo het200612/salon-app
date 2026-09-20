@@ -3,9 +3,6 @@ import api from '../services/api';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import SalonCard from '../components/SalonCard';
-import slide1 from '../assets/slide1.jpg';
-import slide2 from '../assets/slide2.jpg';
-import slide3 from '../assets/slide3.jpg';
 
 export const LandingPage = () => {
   const [salons, setSalons] = useState([]);
@@ -16,19 +13,19 @@ export const LandingPage = () => {
 
   const slides = [
     {
-      img: slide1,
+      img: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=1600&auto=format&fit=crop&q=80',
       title: 'Find and Book Your Perfect Salon',
       subtitle: 'Discover top-rated salons and book your appointment instantly',
     },
     {
-      img: slide2,
-      title: 'Expert Stylists & Luxury Care',
-      subtitle: 'Experience premier salon treatments tailored to your style',
+      img: 'https://images.unsplash.com/photo-1562322140-8baeececf3df?w=1600&auto=format&fit=crop&q=80',
+      title: 'Find and Book Your Perfect Salon',
+      subtitle: 'Discover top-rated salons and book your appointment instantly',
     },
     {
-      img: slide3,
-      title: 'Effortless Time Slot Scheduling',
-      subtitle: 'No waiting in queues — reserve your dedicated appointment online',
+      img: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=1600&auto=format&fit=crop&q=80',
+      title: 'Find and Book Your Perfect Salon',
+      subtitle: 'Discover top-rated salons and book your appointment instantly',
     },
   ];
 
