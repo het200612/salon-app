@@ -1,10 +1,9 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getImageUrl } from '../utils/imageUrl';
 
 export const AdminSidebar = () => {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -13,74 +12,50 @@ export const AdminSidebar = () => {
   };
 
   const navItems = [
-    { label: 'Overview & Approvals', path: '/admin/dashboard', icon: '📊' },
+    { label: 'Dashboard', path: '/admin/dashboard', icon: '🎛️' },
     { label: 'Manage Cities', path: '/admin/cities', icon: '🏙️' },
     { label: 'Manage Areas', path: '/admin/areas', icon: '📍' },
-    { label: 'Manage Services', path: '/admin/services', icon: '✂️' },
+    { label: 'Manage Salon Services', path: '/admin/services', icon: '✂️' },
+    { label: 'Manage Users', path: '/admin/users', icon: '👥' },
+    { label: 'Bookings', path: '/admin/bookings', icon: '📅' },
+    { label: 'Settings', path: '/admin/settings', icon: '⚙️' },
+    { label: 'Change Password', path: '/admin/change-password', icon: '🔒' },
   ];
 
   return (
     <aside style={{
-      width: '280px',
-      backgroundColor: '#181920',
-      border: '1px solid #2E303E',
-      borderRadius: '12px',
-      padding: '1.5rem',
+      width: '260px',
+      backgroundColor: '#161616',
+      borderRight: '1px solid #222222',
+      minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column',
-      gap: '1.5rem',
-      height: 'fit-content',
+      flexShrink: 0,
     }}>
-      {/* Admin Header */}
+      {/* Brand Header */}
       <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '1rem',
-        paddingBottom: '1.25rem',
-        borderBottom: '1px solid #2E303E',
+        padding: '1.5rem 1.75rem',
+        borderBottom: '1px solid #222222',
       }}>
-        <img
-          src={getImageUrl(user?.img)}
-          alt={user?.name || 'Administrator'}
-          style={{
-            width: '56px',
-            height: '56px',
-            borderRadius: '50%',
-            objectFit: 'cover',
-            border: '2px solid #daa520',
-            backgroundColor: '#22232D',
-          }}
-          onError={(e) => {
-            e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=60';
-          }}
-        />
-        <div style={{ overflow: 'hidden' }}>
-          <h3 style={{
-            fontSize: '1.05rem',
-            color: '#fff',
-            margin: 0,
-            whiteSpace: 'nowrap',
-            textOverflow: 'ellipsis',
-            overflow: 'hidden',
-          }}>
-            {user?.name || 'Administrator'}
-          </h3>
-          <p style={{
-            fontSize: '0.8rem',
-            color: '#daa520',
-            margin: '2px 0 0',
-            fontWeight: '600',
-            whiteSpace: 'nowrap',
-            textOverflow: 'ellipsis',
-            overflow: 'hidden',
-          }}>
-            Super Admin
-          </p>
+        <div style={{
+          fontFamily: "'Ephesis', cursive, serif",
+          fontSize: '2.5rem',
+          fontWeight: '700',
+          color: '#daa520',
+          lineHeight: 1,
+          letterSpacing: '1px',
+        }}>
+          Hair Harmony
         </div>
       </div>
 
-      {/* Navigation Links */}
-      <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      {/* Navigation List */}
+      <nav style={{
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '1rem 0',
+        flex: 1,
+      }}>
         {navItems.map((item) => (
           <NavLink
             key={item.path}
@@ -89,53 +64,56 @@ export const AdminSidebar = () => {
             style={({ isActive }) => ({
               display: 'flex',
               alignItems: 'center',
-              gap: '0.75rem',
-              padding: '0.75rem 1rem',
-              borderRadius: '8px',
+              gap: '1rem',
+              padding: '0.85rem 1.75rem',
               fontSize: '0.95rem',
-              fontWeight: '500',
+              fontWeight: isActive ? '600' : '400',
               textDecoration: 'none',
               transition: 'all 0.2s ease',
-              backgroundColor: isActive ? 'rgba(218, 165, 32, 0.15)' : 'transparent',
-              color: isActive ? '#daa520' : '#E5E7EB',
-              borderLeft: isActive ? '3px solid #daa520' : '3px solid transparent',
+              backgroundColor: isActive ? '#242424' : 'transparent',
+              color: isActive ? '#daa520' : '#e0e0e0',
+              borderLeft: isActive ? '4px solid #daa520' : '4px solid transparent',
+              fontFamily: "'Poppins', sans-serif",
             })}
           >
-            <span>{item.icon}</span>
+            <span style={{ fontSize: '1.15rem' }}>{item.icon}</span>
             <span>{item.label}</span>
           </NavLink>
         ))}
-      </nav>
 
-      {/* Logout button */}
-      <button
-        onClick={handleLogout}
-        style={{
-          marginTop: 'auto',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '0.5rem',
-          padding: '0.75rem 1rem',
-          borderRadius: '8px',
-          border: '1px solid rgba(239, 68, 68, 0.4)',
-          backgroundColor: 'rgba(239, 68, 68, 0.08)',
-          color: '#EF4444',
-          fontSize: '0.95rem',
-          fontWeight: '600',
-          cursor: 'pointer',
-          transition: 'all 0.2s',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)';
-        }}
-      >
-        <span>🚪</span>
-        <span>Log Out</span>
-      </button>
+        {/* Logout Item */}
+        <button
+          onClick={handleLogout}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem',
+            padding: '0.85rem 1.75rem',
+            fontSize: '0.95rem',
+            fontWeight: '400',
+            backgroundColor: 'transparent',
+            border: 'none',
+            borderLeft: '4px solid transparent',
+            color: '#e0e0e0',
+            cursor: 'pointer',
+            textAlign: 'left',
+            fontFamily: "'Poppins', sans-serif",
+            transition: 'all 0.2s',
+            marginTop: 'auto',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = '#ef4444';
+            e.currentTarget.style.backgroundColor = '#242424';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = '#e0e0e0';
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
+        >
+          <span style={{ fontSize: '1.15rem' }}>🚪</span>
+          <span>Logout</span>
+        </button>
+      </nav>
     </aside>
   );
 };

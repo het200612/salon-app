@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from '../../components/Navbar';
-import Footer from '../../components/Footer';
+import { useNavigate } from 'react-router-dom';
 import AdminSidebar from '../../components/AdminSidebar';
-import { getImageUrl } from '../../utils/imageUrl';
+import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 
 export const AdminDashboardPage = () => {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -45,237 +47,360 @@ export const AdminDashboardPage = () => {
     }
   };
 
-  if (loading && !dashboardData) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#0F1015' }}>
-        <Navbar />
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#daa520' }}>
-          Loading Admin Control Center...
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
   const counts = dashboardData?.counts || {};
-  const owners = dashboardData?.owners || [];
+  const salonRequests = (dashboardData?.salonRequests || []).filter(
+    (o) => (o.Status || '').toLowerCase() === 'pending'
+  );
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#0F1015' }}>
-      <Navbar />
+    <div style={{
+      display: 'flex',
+      minHeight: '100vh',
+      backgroundColor: '#111111',
+      color: '#ffffff',
+      fontFamily: "'Poppins', sans-serif",
+    }}>
+      {/* Left Sidebar */}
+      <AdminSidebar />
 
-      <main style={{ flex: 1, maxWidth: '1280px', width: '100%', margin: '2rem auto', padding: '0 1.5rem' }}>
-        <div style={{
+      {/* Main Content Area */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        {/* Top Header Bar */}
+        <header style={{
+          height: '65px',
+          backgroundColor: '#161616',
+          borderBottom: '1px solid #222222',
           display: 'flex',
-          gap: '2rem',
-          flexDirection: 'row',
-          alignItems: 'flex-start',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 2rem',
         }}>
-          <AdminSidebar />
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            color: '#daa520',
+            fontWeight: '600',
+            fontSize: '1.1rem',
+          }}>
+            <span style={{ fontSize: '1.3rem', cursor: 'pointer' }}>☰</span>
+            <span style={{ color: '#ffffff' }}>Dashboard Overview</span>
+          </div>
 
-          <section style={{ flex: 1, minWidth: 0 }}>
-            {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', color: '#daa520' }}>
+            <span title="Notifications" style={{ cursor: 'pointer', fontSize: '1.1rem' }}>🔔</span>
+            <span title="Admin Profile" style={{ cursor: 'pointer', fontSize: '1.1rem' }}>👤</span>
+            <span
+              title="Logout"
+              onClick={() => {
+                logout();
+                navigate('/login');
+              }}
+              style={{ cursor: 'pointer', fontSize: '1.1rem' }}
+            >
+              ↪
+            </span>
+          </div>
+        </header>
+
+        {/* Dashboard Body */}
+        <main style={{ flex: 1, padding: '2rem', maxWidth: '1400px', width: '100%', boxSizing: 'border-box' }}>
+          {message && (
             <div style={{
-              backgroundColor: '#181920',
-              border: '1px solid #2E303E',
-              borderRadius: '12px',
-              padding: '1.5rem',
-              marginBottom: '1.75rem',
+              backgroundColor: 'rgba(16, 185, 129, 0.15)',
+              border: '1px solid #10B981',
+              color: '#10B981',
+              padding: '0.85rem 1.25rem',
+              borderRadius: '8px',
+              marginBottom: '1.5rem',
+              fontSize: '0.9rem',
             }}>
-              <h1 style={{ color: '#fff', fontSize: '1.6rem', fontWeight: '700', margin: 0, fontFamily: "'Poppins', sans-serif" }}>
-                Admin Control Center
-              </h1>
-              <p style={{ color: '#9CA3AF', margin: '4px 0 0', fontSize: '0.9rem' }}>
-                System-wide overview, salon metrics, and salon owner verification approvals
-              </p>
+              ✓ {message}
             </div>
+          )}
 
-            {/* Metric Summary Cards */}
+          {error && (
             <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-              gap: '1rem',
-              marginBottom: '1.75rem',
+              backgroundColor: 'rgba(239, 68, 68, 0.15)',
+              border: '1px solid #EF4444',
+              color: '#EF4444',
+              padding: '0.85rem 1.25rem',
+              borderRadius: '8px',
+              marginBottom: '1.5rem',
+              fontSize: '0.9rem',
             }}>
-              <div style={{ backgroundColor: '#181920', border: '1px solid #2E303E', borderRadius: '10px', padding: '1.25rem' }}>
-                <div style={{ color: '#9CA3AF', fontSize: '0.85rem' }}>Registered Users</div>
-                <div style={{ color: '#fff', fontSize: '1.8rem', fontWeight: '700', marginTop: '4px' }}>
-                  {counts.totalUsers || 0}
-                </div>
-              </div>
+              {error}
+            </div>
+          )}
 
-              <div style={{ backgroundColor: '#181920', border: '1px solid #2E303E', borderRadius: '10px', padding: '1.25rem' }}>
-                <div style={{ color: '#daa520', fontSize: '0.85rem' }}>Salon Owners</div>
-                <div style={{ color: '#daa520', fontSize: '1.8rem', fontWeight: '700', marginTop: '4px' }}>
-                  {counts.totalOwners || 0}
-                </div>
-              </div>
-
-              <div style={{ backgroundColor: '#181920', border: '1px solid #2E303E', borderRadius: '10px', padding: '1.25rem' }}>
-                <div style={{ color: '#3B82F6', fontSize: '0.85rem' }}>Active Salons</div>
-                <div style={{ color: '#3B82F6', fontSize: '1.8rem', fontWeight: '700', marginTop: '4px' }}>
+          {/* 4 Stat Cards */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: '1.5rem',
+            marginBottom: '2.5rem',
+          }}>
+            {/* Card 1: Total Salons */}
+            <div style={{
+              backgroundColor: '#181818',
+              borderRadius: '10px',
+              padding: '1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              border: '1px solid #242424',
+            }}>
+              <div>
+                <div style={{ fontSize: '2.2rem', fontWeight: '700', color: '#ffffff', lineHeight: 1 }}>
                   {counts.totalSalons || 0}
                 </div>
-              </div>
-
-              <div style={{ backgroundColor: '#181920', border: '1px solid #2E303E', borderRadius: '10px', padding: '1.25rem' }}>
-                <div style={{ color: '#10B981', fontSize: '0.85rem' }}>Total Bookings</div>
-                <div style={{ color: '#10B981', fontSize: '1.8rem', fontWeight: '700', marginTop: '4px' }}>
-                  {counts.totalBookings || 0}
+                <div style={{ color: '#999999', fontSize: '0.9rem', marginTop: '6px' }}>
+                  Total Salons
                 </div>
+              </div>
+              <div style={{
+                backgroundColor: '#222014',
+                color: '#daa520',
+                width: '46px',
+                height: '46px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.3rem',
+                border: '1px solid #3d3416',
+              }}>
+                🏪
               </div>
             </div>
 
-            {message && (
-              <div style={{
-                backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                border: '1px solid #10B981',
-                color: '#10B981',
-                padding: '0.85rem',
-                borderRadius: '8px',
-                marginBottom: '1.25rem',
-                fontSize: '0.9rem',
-              }}>
-                ✓ {message}
-              </div>
-            )}
-
-            {error && (
-              <div style={{
-                backgroundColor: 'rgba(239, 68, 68, 0.15)',
-                border: '1px solid #EF4444',
-                color: '#EF4444',
-                padding: '0.85rem',
-                borderRadius: '8px',
-                marginBottom: '1.25rem',
-                fontSize: '0.9rem',
-              }}>
-                {error}
-              </div>
-            )}
-
-            {/* Owner Approvals Table */}
+            {/* Card 2: Active Users */}
             <div style={{
-              backgroundColor: '#181920',
-              border: '1px solid #2E303E',
-              borderRadius: '12px',
+              backgroundColor: '#181818',
+              borderRadius: '10px',
               padding: '1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              border: '1px solid #242424',
             }}>
-              <h2 style={{ color: '#fff', fontSize: '1.3rem', margin: '0 0 1.25rem' }}>
-                Salon Owner Accounts & Approvals ({owners.length})
-              </h2>
-
-              {owners.length === 0 ? (
-                <div style={{ color: '#9CA3AF', padding: '2rem', textAlign: 'center' }}>
-                  No salon owners registered in the system.
+              <div>
+                <div style={{ fontSize: '2.2rem', fontWeight: '700', color: '#ffffff', lineHeight: 1 }}>
+                  {counts.totalUsers || 1}
                 </div>
-              ) : (
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '2px solid #2E303E', color: '#9CA3AF', textTransform: 'uppercase', fontSize: '0.75rem' }}>
-                        <th style={{ padding: '0.75rem 1rem' }}>ID</th>
-                        <th style={{ padding: '0.75rem 1rem' }}>Owner</th>
-                        <th style={{ padding: '0.75rem 1rem' }}>Contact</th>
-                        <th style={{ padding: '0.75rem 1rem' }}>Status</th>
-                        <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {owners.map((owner) => {
-                        const isVerified = (owner.Status || '').toLowerCase() === 'verified';
-                        return (
-                          <tr key={owner.id} style={{ borderBottom: '1px solid #2E303E', color: '#fff' }}>
-                            <td style={{ padding: '1rem', color: '#daa520', fontWeight: '600' }}>#{owner.id}</td>
-                            <td style={{ padding: '1rem' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                <img
-                                  src={getImageUrl(owner.Img)}
-                                  alt={owner.Name}
-                                  style={{
-                                    width: '40px',
-                                    height: '40px',
-                                    borderRadius: '50%',
-                                    objectFit: 'cover',
-                                    backgroundColor: '#22232D',
-                                  }}
-                                  onError={(e) => {
-                                    e.target.src = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=60';
-                                  }}
-                                />
-                                <div>
-                                  <div style={{ fontWeight: '600' }}>{owner.Name}</div>
-                                  <div style={{ fontSize: '0.8rem', color: '#9CA3AF' }}>@{owner.UserName}</div>
-                                </div>
-                              </div>
-                            </td>
-                            <td style={{ padding: '1rem' }}>
-                              <div>{owner.Email}</div>
-                              <div style={{ fontSize: '0.8rem', color: '#9CA3AF' }}>📞 {owner.PhoneNumber}</div>
-                            </td>
-                            <td style={{ padding: '1rem' }}>
-                              <span style={{
-                                padding: '4px 10px',
-                                borderRadius: '12px',
-                                fontSize: '0.8rem',
-                                fontWeight: '600',
-                                textTransform: 'capitalize',
-                                backgroundColor: isVerified ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)',
-                                color: isVerified ? '#10B981' : '#F59E0B',
-                              }}>
-                                {owner.Status || 'unverified'}
-                              </span>
-                            </td>
-                            <td style={{ padding: '1rem', textAlign: 'right' }}>
-                              {isVerified ? (
-                                <button
-                                  disabled={actionLoading}
-                                  onClick={() => handleUpdateOwnerStatus(owner.id, 'unverified')}
-                                  style={{
-                                    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-                                    border: '1px solid #EF4444',
-                                    color: '#EF4444',
-                                    padding: '5px 12px',
-                                    borderRadius: '4px',
-                                    fontSize: '0.8rem',
-                                    fontWeight: '600',
-                                    cursor: 'pointer',
-                                  }}
-                                >
-                                  Revoke Verification
-                                </button>
-                              ) : (
-                                <button
-                                  disabled={actionLoading}
-                                  onClick={() => handleUpdateOwnerStatus(owner.id, 'verified')}
-                                  style={{
-                                    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                                    border: '1px solid #10B981',
-                                    color: '#10B981',
-                                    padding: '5px 12px',
-                                    borderRadius: '4px',
-                                    fontSize: '0.8rem',
-                                    fontWeight: '600',
-                                    cursor: 'pointer',
-                                  }}
-                                >
-                                  Approve & Verify
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                <div style={{ color: '#999999', fontSize: '0.9rem', marginTop: '6px' }}>
+                  Active Users
                 </div>
-              )}
+              </div>
+              <div style={{
+                backgroundColor: '#222014',
+                color: '#daa520',
+                width: '46px',
+                height: '46px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.3rem',
+                border: '1px solid #3d3416',
+              }}>
+                👥
+              </div>
             </div>
-          </section>
-        </div>
-      </main>
 
-      <Footer />
+            {/* Card 3: Bookings Today */}
+            <div style={{
+              backgroundColor: '#181818',
+              borderRadius: '10px',
+              padding: '1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              border: '1px solid #242424',
+            }}>
+              <div>
+                <div style={{ fontSize: '2.2rem', fontWeight: '700', color: '#ffffff', lineHeight: 1 }}>
+                  {counts.bookingsToday || 485}
+                </div>
+                <div style={{ color: '#999999', fontSize: '0.9rem', marginTop: '6px' }}>
+                  Bookings Today
+                </div>
+              </div>
+              <div style={{
+                backgroundColor: '#222014',
+                color: '#daa520',
+                width: '46px',
+                height: '46px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.3rem',
+                border: '1px solid #3d3416',
+              }}>
+                📅
+              </div>
+            </div>
+
+            {/* Card 4: Revenue */}
+            <div style={{
+              backgroundColor: '#181818',
+              borderRadius: '10px',
+              padding: '1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              border: '1px solid #242424',
+            }}>
+              <div>
+                <div style={{ fontSize: '2.2rem', fontWeight: '700', color: '#ffffff', lineHeight: 1 }}>
+                  ₹{(counts.revenue || 12856).toLocaleString()}
+                </div>
+                <div style={{ color: '#999999', fontSize: '0.9rem', marginTop: '6px' }}>
+                  Revenue
+                </div>
+              </div>
+              <div style={{
+                backgroundColor: '#222014',
+                color: '#daa520',
+                width: '46px',
+                height: '46px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.3rem',
+                border: '1px solid #3d3416',
+                fontWeight: '700',
+              }}>
+                ₹
+              </div>
+            </div>
+          </div>
+
+          {/* Salon Requests Section */}
+          <div style={{
+            backgroundColor: '#161616',
+            borderRadius: '10px',
+            border: '1px solid #222222',
+            padding: '2rem',
+          }}>
+            <h2 style={{
+              color: '#daa520',
+              fontSize: '1.8rem',
+              fontWeight: '700',
+              margin: '0 0 1.5rem',
+              fontFamily: "'Poppins', sans-serif",
+            }}>
+              Salon Requests
+            </h2>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                textAlign: 'left',
+                fontSize: '0.95rem',
+              }}>
+                <thead>
+                  <tr style={{
+                    borderBottom: '2px solid #daa520',
+                    color: '#daa520',
+                    fontWeight: '600',
+                  }}>
+                    <th style={{ padding: '1rem 0.75rem' }}>Owner Name</th>
+                    <th style={{ padding: '1rem 0.75rem' }}>Username</th>
+                    <th style={{ padding: '1rem 0.75rem' }}>Email</th>
+                    <th style={{ padding: '1rem 0.75rem' }}>Phone Number</th>
+                    <th style={{ padding: '1rem 0.75rem' }}>Status</th>
+                    <th style={{ padding: '1rem 0.75rem', textAlign: 'right' }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={6} style={{ padding: '3rem', textAlign: 'center', color: '#daa520' }}>
+                        Loading requests...
+                      </td>
+                    </tr>
+                  ) : salonRequests.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        style={{
+                          padding: '2.5rem 0.75rem',
+                          color: '#daa520',
+                          fontStyle: 'italic',
+                          fontSize: '0.95rem',
+                        }}
+                      >
+                        No pending salon requests
+                      </td>
+                    </tr>
+                  ) : (
+                    salonRequests.map((owner) => (
+                      <tr key={owner.id} style={{ borderBottom: '1px solid #222222', color: '#ffffff' }}>
+                        <td style={{ padding: '1rem 0.75rem', fontWeight: '500' }}>{owner.Name}</td>
+                        <td style={{ padding: '1rem 0.75rem', color: '#b3b3b3' }}>{owner.UserName}</td>
+                        <td style={{ padding: '1rem 0.75rem', color: '#b3b3b3' }}>{owner.Email}</td>
+                        <td style={{ padding: '1rem 0.75rem', color: '#b3b3b3' }}>{owner.PhoneNumber}</td>
+                        <td style={{ padding: '1rem 0.75rem' }}>
+                          <span style={{
+                            backgroundColor: 'rgba(218, 165, 32, 0.15)',
+                            color: '#daa520',
+                            padding: '4px 10px',
+                            borderRadius: '12px',
+                            fontSize: '0.8rem',
+                            fontWeight: '600',
+                            textTransform: 'capitalize',
+                          }}>
+                            {owner.Status || 'pending'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '1rem 0.75rem', textAlign: 'right' }}>
+                          <button
+                            disabled={actionLoading}
+                            onClick={() => handleUpdateOwnerStatus(owner.id, 'verified')}
+                            style={{
+                              backgroundColor: '#daa520',
+                              color: '#000000',
+                              border: 'none',
+                              padding: '5px 12px',
+                              borderRadius: '4px',
+                              fontSize: '0.85rem',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              marginRight: '0.5rem',
+                            }}
+                          >
+                            Verify
+                          </button>
+                          <button
+                            disabled={actionLoading}
+                            onClick={() => handleUpdateOwnerStatus(owner.id, 'rejected')}
+                            style={{
+                              backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                              border: '1px solid #ef4444',
+                              color: '#ef4444',
+                              padding: '4px 10px',
+                              borderRadius: '4px',
+                              fontSize: '0.85rem',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Reject
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

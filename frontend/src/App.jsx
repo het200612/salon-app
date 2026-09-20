@@ -34,6 +34,10 @@ import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import ManageCitiesPage from './pages/admin/ManageCitiesPage';
 import ManageAreasPage from './pages/admin/ManageAreasPage';
 import ManageAdminServicesPage from './pages/admin/ManageServicesPage';
+import ManageUsersPage from './pages/admin/ManageUsersPage';
+import AdminBookingsPage from './pages/admin/AdminBookingsPage';
+import AdminSettingsPage from './pages/admin/AdminSettingsPage';
+import AdminChangePasswordPage from './pages/admin/AdminChangePasswordPage';
 
 function App() {
   return (
@@ -164,6 +168,38 @@ function App() {
             element={
               <ProtectedRoute role="admin">
                 <ManageAdminServicesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute role="admin">
+                <ManageUsersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/bookings"
+            element={
+              <ProtectedRoute role="admin">
+                <AdminBookingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/settings"
+            element={
+              <ProtectedRoute role="admin">
+                <AdminSettingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/change-password"
+            element={
+              <ProtectedRoute role="admin">
+                <AdminChangePasswordPage />
               </ProtectedRoute>
             }
           />

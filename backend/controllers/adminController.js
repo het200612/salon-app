@@ -19,11 +19,27 @@ async function getDashboard(_req, res) {
        ORDER BY id DESC`
     );
 
-    // 2. Total registered users
-    const [userCountRows] = await pool.query('SELECT COUNT(*) AS totalUsers FROM usermst');
+    // 2. Total registered users (clients)
+    const [userCountRows] = await pool.query("SELECT COUNT(*) AS totalUsers FROM usermst WHERE LOWER(Usertype) = 'user'");
     const totalUsers = userCountRows[0].totalUsers || 0;
 
-    // 3. Today's bookings
+    // 3. Total active salons
+    const [salonCountRows] = await pool.query("SELECT COUNT(*) AS totalSalons FROM salonmst");
+    const totalSalons = salonCountRows[0].totalSalons || 0;
+
+    // 4. Today's bookings count
+    const [todayBookingsCount] = await pool.query(
+      'SELECT COUNT(*) AS count FROM slotbookingmst WHERE BookingDate = CURDATE()'
+    );
+    const bookingsToday = todayBookingsCount[0].count || 0;
+
+    // 5. Total revenue
+    const [revenueRows] = await pool.query(
+      "SELECT COALESCE(SUM(BillAmount), 0) AS totalRevenue FROM slotbookingmst WHERE Status IN ('confirmed', 'completed', 'Accepted')"
+    );
+    const revenue = revenueRows[0].totalRevenue || 0;
+
+    // 6. Today's bookings list
     const [todayBookings] = await pool.query(
       `SELECT 
          b.id, b.BookingDate, b.TimeSlote, b.BillAmount, b.Status,
@@ -41,7 +57,17 @@ async function getDashboard(_req, res) {
 
     return res.json({
       salonRequests,
+      owners: salonRequests,
+      counts: {
+        totalSalons,
+        totalUsers,
+        bookingsToday,
+        revenue,
+      },
+      totalSalons,
       totalUsers,
+      bookingsToday,
+      revenue,
       todayBookings,
     });
   } catch (err) {
