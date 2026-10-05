@@ -34,21 +34,27 @@ async function login(req, res) {
       return res.status(400).json({ message: 'Email and password are required.' });
     }
 
-    // 1. Admin check (Hardcoded credentials matching original Django behavior)
+    // 1. Admin check (Matching original Django behavior)
     if (
-      email.toLowerCase() === 'admin@gmail.com' &&
-      password === 'Admin' &&
-      (!selectedRole || selectedRole.toLowerCase() === 'admin')
+      email.trim().toLowerCase() === 'admin@gmail.com' &&
+      (password.trim() === 'Admin' || password.trim() === 'admin')
     ) {
+      // Find db id if present
+      let adminId = 0;
+      try {
+        const [adminRows] = await pool.query("SELECT id FROM usermst WHERE LOWER(Email) = 'admin@gmail.com'");
+        if (adminRows.length > 0) adminId = adminRows[0].id;
+      } catch (_) {}
+
       const token = jwt.sign(
-        { id: 0, email: 'admin@gmail.com', name: 'Admin', role: 'admin' },
+        { id: adminId, email: 'admin@gmail.com', name: 'Administrator', role: 'admin' },
         JWT_SECRET,
         { expiresIn: JWT_EXPIRES_IN }
       );
       return res.json({
         token,
         role: 'admin',
-        user: { id: 0, name: 'Administrator', email: 'admin@gmail.com', role: 'admin' },
+        user: { id: adminId, name: 'Administrator', email: 'admin@gmail.com', role: 'admin', usertype: 'Admin' },
       });
     }
 
@@ -69,7 +75,29 @@ async function login(req, res) {
       return res.status(401).json({ message: 'Username or password is incorrect' });
     }
 
-    const userTypeNormalized = dbUser.Usertype.toLowerCase();
+    const userTypeNormalized = (dbUser.Usertype || '').toLowerCase();
+
+    // 2b. Database Admin check
+    if (userTypeNormalized === 'admin') {
+      const token = jwt.sign(
+        { id: dbUser.id, email: dbUser.Email, name: dbUser.Name, role: 'admin' },
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRES_IN }
+      );
+      return res.json({
+        token,
+        role: 'admin',
+        user: {
+          id: dbUser.id,
+          name: dbUser.Name,
+          userName: dbUser.UserName,
+          email: dbUser.Email,
+          phoneNumber: dbUser.PhoneNumber,
+          usertype: 'Admin',
+          status: dbUser.Status || 'verified',
+        },
+      });
+    }
 
     // 3. Owner role handling (Must have Status = 'verified')
     if (userTypeNormalized === 'owner') {
@@ -286,10 +314,11 @@ async function resetPassword(req, res) {
 async function changePassword(req, res) {
   try {
     const userId = req.user.id;
-    const { oldPassword, newPassword, confirmPassword } = req.body;
+    const oldPassword = req.body.oldPassword || req.body.currentPassword;
+    const { newPassword, confirmPassword } = req.body;
 
     if (!oldPassword || !newPassword) {
-      return res.status(400).json({ message: 'Old password and new password are required.' });
+      return res.status(400).json({ message: 'Current password and new password are required.' });
     }
 
     if (confirmPassword && newPassword !== confirmPassword) {

@@ -2,6 +2,8 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+import logoEmblem from '../assets/logo-emblem.png';
+
 export const Navbar = () => {
   const { isAuthenticated, user, role, logout } = useAuth();
   const navigate = useNavigate();
@@ -35,20 +37,40 @@ export const Navbar = () => {
         alignItems: 'center',
         justifyContent: 'space-between',
       }}>
-        {/* Brand in Ephesis cursive gold font */}
+        {/* Brand with Symbol */}
         <Link
           to="/"
           style={{
-            fontFamily: "'Ephesis', cursive, serif",
-            fontSize: '2.5rem',
-            fontWeight: '700',
-            color: '#daa520',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
             textDecoration: 'none',
-            lineHeight: 1,
-            letterSpacing: '1px',
           }}
         >
-          Hair Harmony
+          <img
+            src={logoEmblem}
+            alt="Hair Harmony Symbol"
+            style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '50%',
+              objectFit: 'cover',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+              border: '1.5px solid #daa520',
+            }}
+          />
+          <span
+            style={{
+              fontFamily: "'Ephesis', cursive, serif",
+              fontSize: '2.5rem',
+              fontWeight: '700',
+              color: '#daa520',
+              lineHeight: 1,
+              letterSpacing: '1px',
+            }}
+          >
+            Hair Harmony
+          </span>
         </Link>
 
         {/* Navigation Links */}

@@ -58,6 +58,11 @@ export const BookingPage = () => {
     e.preventDefault();
     setError('');
 
+    if (bookingDate < todayStr) {
+      setError('Appointment date cannot be in the past.');
+      return;
+    }
+
     if (!selectedSlot) {
       setError('Please select an appointment time slot.');
       return;
@@ -70,12 +75,14 @@ export const BookingPage = () => {
 
     try {
       setSubmitting(true);
-      // Django reference creates one booking per service or a combined slot booking.
-      // Our backend createBooking accepts service_ids array or single serviceId
       await api.post('/bookings', {
+        salonId: id,
         salon_id: id,
+        date: bookingDate,
         booking_date: bookingDate,
+        timeSlot: selectedSlot,
         time_slot: selectedSlot,
+        serviceId: selectedServices[0]?.id,
         service_ids: selectedServices.map((s) => s.id),
         total_amount: totalAmount,
       });

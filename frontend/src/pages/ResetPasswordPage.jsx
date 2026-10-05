@@ -93,7 +93,12 @@ export const ResetPasswordPage = () => {
               fontSize: '0.85rem',
               marginBottom: '1.5rem',
             }}>
-              {errorMsg}
+              <div>{errorMsg}</div>
+              <div style={{ marginTop: '6px' }}>
+                <Link to="/forgot-password" style={{ color: '#d4af37', textDecoration: 'underline' }}>
+                  Request a new reset link
+                </Link>
+              </div>
             </div>
           )}
 

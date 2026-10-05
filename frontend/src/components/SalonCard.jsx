@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getImageUrl } from '../utils/imageUrl';
+import { getImageUrl, DEFAULT_SALON_IMAGE } from '../utils/imageUrl';
 
 export const SalonCard = ({ salon }) => {
   const navigate = useNavigate();
@@ -53,7 +53,7 @@ export const SalonCard = ({ salon }) => {
             transition: 'transform 0.4s ease',
           }}
           onError={(e) => {
-            e.target.src = '/vite.svg';
+            e.target.src = DEFAULT_SALON_IMAGE;
           }}
         />
         {/* Salon Type Tag */}

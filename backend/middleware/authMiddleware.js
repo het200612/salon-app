@@ -34,7 +34,7 @@ function verifyToken(req, res, next) {
  * Middleware to require Admin role.
  */
 function requireAdmin(req, res, next) {
-  if (!req.user || req.user.role !== 'admin') {
+  if (!req.user || (req.user.role || '').toLowerCase() !== 'admin') {
     return res.status(403).json({ message: 'Forbidden. Admin privileges required.' });
   }
   next();

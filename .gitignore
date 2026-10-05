@@ -16,6 +16,7 @@ build/
 # Uploads (user-generated content)
 backend/uploads/*
 !backend/uploads/.gitkeep
+!backend/uploads/default.jpg
 
 # OS
 .DS_Store

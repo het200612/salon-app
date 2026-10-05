@@ -122,6 +122,10 @@ async function createSalon(req, res) {
       return res.status(400).json({ message: 'Number of seats must be a positive integer.' });
     }
 
+    if (openTime >= closeTime) {
+      return res.status(400).json({ message: 'Closing time must be after opening time.' });
+    }
+
     // Check if owner already has a salon
     const [existing] = await pool.query('SELECT id FROM salonmst WHERE Owner_id = ?', [ownerId]);
     if (existing.length > 0) {
@@ -174,6 +178,10 @@ async function updateSalon(req, res) {
     const seats = parseInt(numberOfSeats, 10);
     if (isNaN(seats) || seats <= 0) {
       return res.status(400).json({ message: 'Number of seats must be a positive integer.' });
+    }
+
+    if (openTime >= closeTime) {
+      return res.status(400).json({ message: 'Closing time must be after opening time.' });
     }
 
     await pool.query(
@@ -312,11 +320,79 @@ async function uploadSalonImages(req, res) {
   }
 }
 
+/**
+ * DELETE /api/owner/services/:id
+
+ * Protected (requireOwner).
+ */
+async function deleteOwnerService(req, res) {
+  try {
+    const ownerId = req.user.id;
+    const serviceId = req.params.id;
+
+    const [salons] = await pool.query('SELECT id FROM salonmst WHERE Owner_id = ?', [ownerId]);
+    if (salons.length === 0) {
+      return res.status(404).json({ message: 'Salon not found for this owner.' });
+    }
+
+    const salonId = salons[0].id;
+
+    const [result] = await pool.query(
+      'DELETE FROM selectedservicesmst WHERE id = ? AND SalonId_id = ?',
+      [serviceId, salonId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Service not found in your salon.' });
+    }
+
+    return res.json({ message: 'Service removed from salon successfully.' });
+  } catch (err) {
+    console.error('Delete owner service error:', err);
+    return res.status(500).json({ message: 'Server error removing service.' });
+  }
+}
+
+/**
+ * DELETE /api/owner/images/:id
+ * Protected (requireOwner).
+ */
+async function deleteSalonImage(req, res) {
+  try {
+    const ownerId = req.user.id;
+    const imageId = req.params.id;
+
+    const [salons] = await pool.query('SELECT id FROM salonmst WHERE Owner_id = ?', [ownerId]);
+    if (salons.length === 0) {
+      return res.status(404).json({ message: 'Salon not found for this owner.' });
+    }
+
+    const salonId = salons[0].id;
+
+    const [result] = await pool.query(
+      'DELETE FROM imagemst WHERE id = ? AND SalonId_id = ?',
+      [imageId, salonId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Image not found in your gallery.' });
+    }
+
+    return res.json({ message: 'Image removed from gallery successfully.' });
+  } catch (err) {
+    console.error('Delete salon image error:', err);
+    return res.status(500).json({ message: 'Server error removing image.' });
+  }
+}
+
 module.exports = {
   getProfile,
   createSalon,
   updateSalon,
   getOwnerServices,
   addOwnerService,
+  deleteOwnerService,
   uploadSalonImages,
+  deleteSalonImage,
 };
+

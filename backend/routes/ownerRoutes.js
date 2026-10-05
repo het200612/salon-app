@@ -17,8 +17,11 @@ router.put('/salon/:id', uploadSingle, ownerController.updateSalon);
 // Service management
 router.get('/services', ownerController.getOwnerServices);
 router.post('/services', ownerController.addOwnerService);
+router.delete('/services/:id', ownerController.deleteOwnerService);
 
-// Gallery upload (up to 5 images)
+// Gallery upload and delete
 router.post('/images', uploadMultiple, ownerController.uploadSalonImages);
+router.delete('/images/:id', ownerController.deleteSalonImage);
 
 module.exports = router;
+

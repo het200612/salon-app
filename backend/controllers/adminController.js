@@ -209,14 +209,25 @@ async function deleteCity(req, res) {
 /**
  * GET /api/admin/areas
  */
-async function getAreas(_req, res) {
+async function getAreas(req, res) {
   try {
-    const [areas] = await pool.query(
-      `SELECT a.id, a.AreaName, a.CityName_id, c.CityName
-       FROM areamst a
-       JOIN citymst c ON a.CityName_id = c.id
-       ORDER BY a.AreaName ASC`
-    );
+    const { cityId, city, CityName_id } = req.query || {};
+    const targetCityId = cityId || CityName_id;
+    let query = `
+      SELECT a.id, a.AreaName, a.CityName_id, c.CityName
+      FROM areamst a
+      JOIN citymst c ON a.CityName_id = c.id
+    `;
+    const params = [];
+    if (targetCityId) {
+      query += ' WHERE a.CityName_id = ?';
+      params.push(targetCityId);
+    } else if (city) {
+      query += ' WHERE LOWER(c.CityName) = LOWER(?)';
+      params.push(city);
+    }
+    query += ' ORDER BY a.AreaName ASC';
+    const [areas] = await pool.query(query, params);
     return res.json(areas);
   } catch (err) {
     console.error('Get areas error:', err);

@@ -4,12 +4,38 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import SalonCard from '../components/SalonCard';
 
+// Known coordinates for intelligent distance calculation
+const KNOWN_COORDS = [
+  { id: 1, name: 'Andheri', city: 'Mumbai', lat: 19.1136, lng: 72.8697 },
+  { id: 2, name: 'Bandra', city: 'Mumbai', lat: 19.0596, lng: 72.8295 },
+  { id: 3, name: 'Adajan', city: 'Surat', lat: 21.1984, lng: 72.7933 },
+  { id: 4, name: 'Vesu', city: 'Surat', lat: 21.1444, lng: 72.7725 },
+  { id: 5, name: 'Navrangpura', city: 'Ahmedabad', lat: 23.0365, lng: 72.5611 },
+  { id: 6, name: 'Alkapuri', city: 'Vadodara', lat: 22.3106, lng: 73.1707 },
+];
+
+function calculateDistanceKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 export const LandingPage = () => {
   const [salons, setSalons] = useState([]);
   const [areas, setAreas] = useState([]);
   const [selectedArea, setSelectedArea] = useState('');
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationStatus, setLocationStatus] = useState('');
 
   const slides = [
     {
@@ -76,7 +102,11 @@ export const LandingPage = () => {
           salonsRes.data.forEach((s) => {
             if (s.Area_id && !map.has(s.Area_id)) {
               map.set(s.Area_id, true);
-              uniqueAreas.push({ id: s.Area_id, AreaName: s.AreaName || `Area #${s.Area_id}` });
+              uniqueAreas.push({
+                id: s.Area_id,
+                AreaName: s.AreaName || `Area #${s.Area_id}`,
+                CityName: s.CityName || '',
+              });
             }
           });
           setAreas(uniqueAreas);
@@ -91,6 +121,98 @@ export const LandingPage = () => {
     const areaId = e.target.value;
     setSelectedArea(areaId);
     fetchSalons(areaId);
+  };
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationStatus('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    setIsLocating(true);
+    setLocationStatus('Detecting your location...');
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        let matchedArea = null;
+
+        // 1. Calculate nearest known coordinate
+        let minDistance = Infinity;
+        let nearestLoc = null;
+        for (const loc of KNOWN_COORDS) {
+          const dist = calculateDistanceKm(latitude, longitude, loc.lat, loc.lng);
+          if (dist < minDistance) {
+            minDistance = dist;
+            nearestLoc = loc;
+          }
+        }
+
+        // 2. Try reverse geocoding via Nominatim
+        try {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 2000);
+          const resp = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+            { signal: controller.signal }
+          );
+          clearTimeout(timer);
+          if (resp.ok) {
+            const data = await resp.json();
+            const addr = data.address || {};
+            const cityName = (addr.city || addr.town || addr.state_district || '').toLowerCase();
+            const suburbName = (addr.suburb || addr.neighbourhood || addr.residential || '').toLowerCase();
+
+            matchedArea = areas.find(
+              (a) =>
+                (suburbName && a.AreaName.toLowerCase().includes(suburbName)) ||
+                (cityName && a.CityName && a.CityName.toLowerCase().includes(cityName))
+            );
+          }
+        } catch (e) {
+          // ignore network timeout
+        }
+
+        if (!matchedArea && nearestLoc) {
+          matchedArea = areas.find(
+            (a) => a.id === nearestLoc.id || a.AreaName.toLowerCase() === nearestLoc.name.toLowerCase()
+          );
+        }
+
+        if (!matchedArea && areas.length > 0) {
+          matchedArea = areas[0];
+        }
+
+        setIsLocating(false);
+
+        if (matchedArea) {
+          setSelectedArea(String(matchedArea.id));
+          setLocationStatus(`📍 Detected location: ${matchedArea.AreaName} (${matchedArea.CityName || ''})`);
+          fetchSalons(String(matchedArea.id));
+        } else {
+          setLocationStatus('Showing all available salons.');
+          fetchSalons('');
+        }
+
+        const section = document.getElementById('salons-section');
+        if (section) section.scrollIntoView({ behavior: 'smooth' });
+      },
+      (err) => {
+        setIsLocating(false);
+        console.warn('Geolocation error:', err.message);
+        const fallbackArea = areas[0];
+        if (fallbackArea) {
+          setSelectedArea(String(fallbackArea.id));
+          setLocationStatus(`📍 Showing salons in ${fallbackArea.AreaName}`);
+          fetchSalons(String(fallbackArea.id));
+        } else {
+          setLocationStatus('⚠️ Location permission denied. Please select an area manually.');
+        }
+        const section = document.getElementById('salons-section');
+        if (section) section.scrollIntoView({ behavior: 'smooth' });
+      },
+      { timeout: 7000, enableHighAccuracy: true }
+    );
   };
 
   return (
@@ -157,7 +279,7 @@ export const LandingPage = () => {
             {slides[currentSlide].subtitle}
           </p>
 
-          {/* Floating White Search Card */}
+          {/* Floating White Search Card (matching Photo 2 design) */}
           <div style={{
             backgroundColor: '#ffffff',
             borderRadius: '10px',
@@ -173,7 +295,7 @@ export const LandingPage = () => {
             <div style={{ flex: 1, position: 'relative' }}>
               <select
                 value={selectedArea}
-                onChange={(e) => setSelectedArea(e.target.value)}
+                onChange={handleAreaChange}
                 style={{
                   width: '100%',
                   padding: '0.85rem 1.25rem',
@@ -191,7 +313,7 @@ export const LandingPage = () => {
                 <option value="">Select Area</option>
                 {areas.map((area) => (
                   <option key={area.id} value={area.id}>
-                    {area.AreaName || area.name}
+                    {area.AreaName} {area.CityName ? `(${area.CityName})` : ''}
                   </option>
                 ))}
               </select>
@@ -228,15 +350,11 @@ export const LandingPage = () => {
             {/* Location Navigation Arrow Icon Button */}
             <button
               type="button"
-              onClick={() => {
-                if (areas.length > 0) {
-                  setSelectedArea(areas[0].id);
-                  fetchSalons(areas[0].id);
-                }
-              }}
+              onClick={handleUseCurrentLocation}
+              disabled={isLocating}
               title="Use Location"
               style={{
-                backgroundColor: '#ffffff',
+                backgroundColor: isLocating ? '#eff6ff' : '#ffffff',
                 border: '1.5px solid #3b82f6',
                 borderRadius: '6px',
                 width: '46px',
@@ -244,19 +362,67 @@ export const LandingPage = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
+                cursor: isLocating ? 'wait' : 'pointer',
                 color: '#2563eb',
                 flexShrink: 0,
                 transition: 'all 0.2s',
               }}
               onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#eff6ff'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#ffffff'; }}
+              onMouseLeave={(e) => { if (!isLocating) e.currentTarget.style.backgroundColor = '#ffffff'; }}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="#2563eb">
-                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-              </svg>
+              {isLocating ? (
+                <div style={{
+                  width: '18px',
+                  height: '18px',
+                  border: '2.5px solid #93c5fd',
+                  borderTopColor: '#2563eb',
+                  borderRadius: '50%',
+                  animation: 'spin 0.8s linear infinite',
+                }} />
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#2563eb">
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                </svg>
+              )}
             </button>
           </div>
+
+          {/* Location Status Message Toast */}
+          {locationStatus && (
+            <div style={{
+              marginTop: '0.85rem',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              backgroundColor: 'rgba(20, 20, 20, 0.85)',
+              color: '#ffd700',
+              padding: '0.45rem 1.1rem',
+              borderRadius: '20px',
+              fontSize: '0.85rem',
+              fontWeight: '500',
+              backdropFilter: 'blur(6px)',
+              border: '1px solid rgba(255, 215, 0, 0.35)',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+            }}>
+              <span>{locationStatus}</span>
+              <button
+                type="button"
+                onClick={() => setLocationStatus('')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#ffffff',
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  marginLeft: '0.3rem',
+                  padding: 0,
+                  lineHeight: 1,
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Carousel Left / Right Arrows */}
@@ -340,12 +506,13 @@ export const LandingPage = () => {
                 fontSize: '0.9rem',
                 outline: 'none',
                 cursor: 'pointer',
+                minWidth: '180px',
               }}
             >
               <option value="">All Locations</option>
               {areas.map((area) => (
                 <option key={area.id} value={area.id}>
-                  {area.AreaName || area.name}
+                  {area.AreaName} {area.CityName ? `(${area.CityName})` : ''}
                 </option>
               ))}
             </select>

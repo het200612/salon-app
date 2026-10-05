@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
-import authBg from '../assets/auth-bg.jpg';
+const authBg = 'https://images.pexels.com/photos/1319459/pexels-photo-1319459.jpeg?auto=compress&cs=tinysrgb&w=600';
 import logoEmblem from '../assets/logo-emblem.png';
 
 export const LoginPage = () => {
@@ -120,7 +120,7 @@ export const LoginPage = () => {
             <img
               src={logoEmblem}
               alt="Logo Emblem"
-              style={{ width: '80%', height: '80%', objectFit: 'contain' }}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               onError={(e) => { e.target.style.display = 'none'; }}
             />
           </div>
@@ -201,7 +201,13 @@ export const LoginPage = () => {
               type="email"
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setEmail(val);
+                if (val.trim().toLowerCase() === 'admin@gmail.com') {
+                  setRole('Admin');
+                }
+              }}
               placeholder="Email"
               style={{
                 width: '100%',

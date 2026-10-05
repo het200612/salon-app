@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Navbar from '../../components/Navbar';
-import Footer from '../../components/Footer';
-import OwnerSidebar from '../../components/OwnerSidebar';
+import { useNavigate, Link } from 'react-router-dom';
+import OwnerLayout from '../../components/OwnerLayout';
 import { getImageUrl } from '../../utils/imageUrl';
 import api from '../../services/api';
 
@@ -14,68 +12,78 @@ export const EditSalonPage = () => {
     location: '',
     cityId: '',
     areaId: '',
-    openTime: '',
-    closeTime: '',
-    numberOfSeats: '',
+    openTime: '09:00:00',
+    closeTime: '20:00:00',
+    numberOfSeats: '1',
     type: 'Unisex',
   });
+  const [existingImg, setExistingImg] = useState('');
   const [coverImage, setCoverImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState('');
+  const [cities, setCities] = useState([]);
   const [areas, setAreas] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchSalonData();
+    loadSalonData();
   }, []);
 
-  const fetchSalonData = async () => {
+  const loadSalonData = async () => {
     try {
       setLoading(true);
-      const [profileRes, areasRes] = await Promise.all([
+      setError('');
+      const [profileRes, citiesRes, areasRes] = await Promise.all([
         api.get('/owner/profile'),
-        api.get('/salons/areas').catch(() => ({ data: [] })),
+        api.get('/cities').catch(() => ({ data: [] })),
+        api.get('/areas').catch(() => ({ data: [] })),
       ]);
 
+      setCities(citiesRes.data || []);
       setAreas(areasRes.data || []);
 
-      if (profileRes.data?.needsSalon) {
+      if (profileRes.data?.needsSalon || !profileRes.data?.salon) {
         navigate('/owner/register-salon');
         return;
       }
 
       const s = profileRes.data.salon;
-      if (s) {
-        setSalonId(s.id);
-        setFormData({
-          name: s.Name || '',
-          location: s.Location || '',
-          cityId: s.City_id || '',
-          areaId: s.Area_id || '',
-          openTime: s.OpenTime || '09:00',
-          closeTime: s.CloseTime || '21:00',
-          numberOfSeats: s.NumberOfSeats || '5',
-          type: s.Type || 'Unisex',
-        });
-        if (s.Img) {
-          setImagePreview(getImageUrl(s.Img));
-        }
-      }
+      setSalonId(s.id);
+      setExistingImg(s.Img || '');
+      setFormData({
+        name: s.Name || '',
+        location: s.Location || '',
+        cityId: s.City_id || '',
+        areaId: s.Area_id || '',
+        openTime: s.OpenTime ? (s.OpenTime.length === 5 ? `${s.OpenTime}:00` : s.OpenTime) : '09:00:00',
+        closeTime: s.CloseTime ? (s.CloseTime.length === 5 ? `${s.CloseTime}:00` : s.CloseTime) : '20:00:00',
+        numberOfSeats: String(s.NumberOfSeats || '1'),
+        type: s.Type || 'Unisex',
+      });
     } catch (err) {
-      console.error('Failed to load salon for editing:', err);
-      setError('Unable to load salon details.');
+      console.error('Failed to load salon:', err);
+      setError('Unable to load salon profile for editing.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCityChange = (cityId) => {
+    const matchingAreas = areas.filter((a) => String(a.CityName_id) === String(cityId));
+    setFormData((prev) => ({
+      ...prev,
+      cityId,
+      areaId: matchingAreas.some((a) => String(a.id) === String(prev.areaId))
+        ? prev.areaId
+        : (matchingAreas.length > 0 ? String(matchingAreas[0].id) : ''),
+    }));
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setCoverImage(file);
-      setImagePreview(URL.createObjectURL(file));
     }
   };
 
@@ -85,359 +93,254 @@ export const EditSalonPage = () => {
 
     setError('');
     setMessage('');
-    setSubmitting(true);
+
+    if (parseInt(formData.numberOfSeats, 10) <= 0) {
+      setError('Number of seats must be at least 1.');
+      return;
+    }
+
+    if (formData.openTime >= formData.closeTime) {
+      setError('Closing time must be after opening time.');
+      return;
+    }
 
     try {
+      setSaving(true);
       const data = new FormData();
-      data.append('name', formData.name);
-      data.append('location', formData.location);
+      data.append('name', formData.name.trim());
+      data.append('location', formData.location.trim());
       data.append('cityId', formData.cityId);
       data.append('areaId', formData.areaId);
       data.append('openTime', formData.openTime);
       data.append('closeTime', formData.closeTime);
       data.append('numberOfSeats', formData.numberOfSeats);
       data.append('type', formData.type);
+
       if (coverImage) {
         data.append('img', coverImage);
       }
 
-      await api.put(`/owner/salon/${salonId}`, data, {
+      const res = await api.put(`/owner/salon/${salonId}`, data, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
       setMessage('Salon profile updated successfully!');
+      if (res.data?.salon?.Img) {
+        setExistingImg(res.data.salon.Img);
+      }
       setTimeout(() => setMessage(''), 4000);
     } catch (err) {
+      console.error('Update salon error:', err);
       setError(err.response?.data?.message || 'Failed to update salon profile.');
     } finally {
-      setSubmitting(false);
+      setSaving(false);
     }
   };
 
+  const filteredAreas = areas.filter((a) => {
+    if (!formData.cityId) return true;
+    return String(a.CityName_id) === String(formData.cityId);
+  });
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#0F1015' }}>
-      <Navbar />
+    <OwnerLayout activeMenu="profile">
+      <div className="owner-edit-container">
+        <h2 className="owner-edit-title">
+          Edit Salon: {formData.name || 'Salon'}
+        </h2>
 
-      <main style={{ flex: 1, maxWidth: '1280px', width: '100%', margin: '2rem auto', padding: '0 1.5rem' }}>
-        <div style={{
-          display: 'flex',
-          gap: '2rem',
-          flexDirection: 'row',
-          alignItems: 'flex-start',
-        }}>
-          <OwnerSidebar />
+        {message && (
+          <div style={{
+            backgroundColor: 'rgba(46, 204, 113, 0.15)',
+            border: '1px solid #2ecc71',
+            color: '#2ecc71',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            marginBottom: '1.5rem',
+            textAlign: 'center',
+            fontSize: '0.95rem',
+          }}>
+            ✓ {message}
+          </div>
+        )}
 
-          <section style={{ flex: 1, minWidth: 0 }}>
-            <div style={{
-              backgroundColor: '#181920',
-              border: '1px solid #2E303E',
-              borderRadius: '12px',
-              padding: '2rem',
-              maxWidth: '720px',
-            }}>
-              <h1 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: '700', margin: '0 0 0.5rem' }}>
-                Edit Salon Details
-              </h1>
-              <p style={{ color: '#9CA3AF', margin: '0 0 1.5rem', fontSize: '0.9rem' }}>
-                Modify your salon's opening hours, seating capacity, or location info
-              </p>
+        {error && (
+          <div style={{
+            backgroundColor: 'rgba(239, 68, 68, 0.15)',
+            border: '1px solid #ef4444',
+            color: '#ef4444',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            marginBottom: '1.5rem',
+            textAlign: 'center',
+            fontSize: '0.95rem',
+          }}>
+            ⚠ {error}
+          </div>
+        )}
 
-              {message && (
-                <div style={{
-                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                  border: '1px solid #10B981',
-                  color: '#10B981',
-                  padding: '0.85rem',
-                  borderRadius: '6px',
-                  marginBottom: '1.25rem',
-                  fontSize: '0.9rem',
-                }}>
-                  ✓ {message}
-                </div>
-              )}
-
-              {error && (
-                <div style={{
-                  backgroundColor: 'rgba(239, 68, 68, 0.15)',
-                  border: '1px solid #EF4444',
-                  color: '#EF4444',
-                  padding: '0.85rem',
-                  borderRadius: '6px',
-                  marginBottom: '1.25rem',
-                  fontSize: '0.9rem',
-                }}>
-                  {error}
-                </div>
-              )}
-
-              {loading ? (
-                <div style={{ color: '#daa520', padding: '2rem' }}>Loading details...</div>
-              ) : (
-                <form onSubmit={handleSubmit}>
-                  {/* Cover Photo */}
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1.5rem',
-                    marginBottom: '1.5rem',
-                    padding: '1rem',
-                    backgroundColor: '#22232D',
-                    borderRadius: '8px',
-                    border: '1px solid #2E303E',
-                  }}>
-                    <img
-                      src={imagePreview || 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=150&auto=format&fit=crop&q=80'}
-                      alt="Cover Preview"
-                      style={{
-                        width: '90px',
-                        height: '70px',
-                        borderRadius: '6px',
-                        objectFit: 'cover',
-                        border: '2px solid #daa520',
-                      }}
-                    />
-                    <div>
-                      <label style={{
-                        display: 'inline-block',
-                        backgroundColor: '#daa520',
-                        color: '#121212',
-                        padding: '6px 14px',
-                        borderRadius: '6px',
-                        fontSize: '0.85rem',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        marginBottom: '4px',
-                      }}>
-                        Change Cover Photo
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageChange}
-                          style={{ display: 'none' }}
-                        />
-                      </label>
-                      <p style={{ margin: 0, color: '#9CA3AF', fontSize: '0.75rem' }}>
-                        Recommended resolution: 1200x800px
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Name */}
-                  <div style={{ marginBottom: '1.25rem' }}>
-                    <label style={{ display: 'block', color: '#E5E7EB', fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.4rem' }}>
-                      Salon Name
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem 1rem',
-                        backgroundColor: '#22232D',
-                        border: '1px solid #2E303E',
-                        borderRadius: '8px',
-                        color: '#fff',
-                        fontSize: '0.95rem',
-                        outline: 'none',
-                      }}
-                    />
-                  </div>
-
-                  {/* Location */}
-                  <div style={{ marginBottom: '1.25rem' }}>
-                    <label style={{ display: 'block', color: '#E5E7EB', fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.4rem' }}>
-                      Address / Location
-                    </label>
-                    <textarea
-                      rows={2}
-                      required
-                      value={formData.location}
-                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem 1rem',
-                        backgroundColor: '#22232D',
-                        border: '1px solid #2E303E',
-                        borderRadius: '8px',
-                        color: '#fff',
-                        fontSize: '0.95rem',
-                        outline: 'none',
-                        resize: 'vertical',
-                      }}
-                    />
-                  </div>
-
-                  {/* Area & Type */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '1.25rem',
-                    marginBottom: '1.25rem',
-                  }}>
-                    <div>
-                      <label style={{ display: 'block', color: '#E5E7EB', fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.4rem' }}>
-                        Area
-                      </label>
-                      <select
-                        required
-                        value={formData.areaId}
-                        onChange={(e) => {
-                          const sel = areas.find((a) => String(a.id) === e.target.value);
-                          setFormData({
-                            ...formData,
-                            areaId: e.target.value,
-                            cityId: sel ? sel.City_id : formData.cityId,
-                          });
-                        }}
-                        style={{
-                          width: '100%',
-                          padding: '0.75rem 1rem',
-                          backgroundColor: '#22232D',
-                          border: '1px solid #2E303E',
-                          borderRadius: '8px',
-                          color: '#fff',
-                          fontSize: '0.95rem',
-                          outline: 'none',
-                        }}
-                      >
-                        {areas.map((area) => (
-                          <option key={area.id} value={area.id}>
-                            {area.AreaName}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label style={{ display: 'block', color: '#E5E7EB', fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.4rem' }}>
-                        Salon Type
-                      </label>
-                      <select
-                        required
-                        value={formData.type}
-                        onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                        style={{
-                          width: '100%',
-                          padding: '0.75rem 1rem',
-                          backgroundColor: '#22232D',
-                          border: '1px solid #2E303E',
-                          borderRadius: '8px',
-                          color: '#fff',
-                          fontSize: '0.95rem',
-                          outline: 'none',
-                        }}
-                      >
-                        <option value="Unisex">Unisex</option>
-                        <option value="Men">Men Only</option>
-                        <option value="Women">Women Only</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Seats, OpenTime, CloseTime */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
-                    gap: '1.25rem',
-                    marginBottom: '2rem',
-                  }}>
-                    <div>
-                      <label style={{ display: 'block', color: '#E5E7EB', fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.4rem' }}>
-                        Seating Capacity
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="50"
-                        required
-                        value={formData.numberOfSeats}
-                        onChange={(e) => setFormData({ ...formData, numberOfSeats: e.target.value })}
-                        style={{
-                          width: '100%',
-                          padding: '0.75rem 1rem',
-                          backgroundColor: '#22232D',
-                          border: '1px solid #2E303E',
-                          borderRadius: '8px',
-                          color: '#fff',
-                          fontSize: '0.95rem',
-                          outline: 'none',
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ display: 'block', color: '#E5E7EB', fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.4rem' }}>
-                        Open Time
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.openTime}
-                        onChange={(e) => setFormData({ ...formData, openTime: e.target.value })}
-                        style={{
-                          width: '100%',
-                          padding: '0.75rem 1rem',
-                          backgroundColor: '#22232D',
-                          border: '1px solid #2E303E',
-                          borderRadius: '8px',
-                          color: '#fff',
-                          fontSize: '0.95rem',
-                          outline: 'none',
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ display: 'block', color: '#E5E7EB', fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.4rem' }}>
-                        Close Time
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.closeTime}
-                        onChange={(e) => setFormData({ ...formData, closeTime: e.target.value })}
-                        style={{
-                          width: '100%',
-                          padding: '0.75rem 1rem',
-                          backgroundColor: '#22232D',
-                          border: '1px solid #2E303E',
-                          borderRadius: '8px',
-                          color: '#fff',
-                          fontSize: '0.95rem',
-                          outline: 'none',
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    style={{
-                      backgroundColor: '#daa520',
-                      color: '#121212',
-                      padding: '0.85rem 2rem',
-                      borderRadius: '8px',
-                      border: 'none',
-                      fontSize: '1rem',
-                      fontWeight: '700',
-                      cursor: submitting ? 'not-allowed' : 'pointer',
-                      opacity: submitting ? 0.7 : 1,
-                    }}
-                  >
-                    {submitting ? 'Updating Profile...' : 'Save Salon Profile'}
-                  </button>
-                </form>
-              )}
+        {loading ? (
+          <div style={{ textAlign: 'center', color: '#d4af37', padding: '2rem' }}>
+            <i className="fas fa-spinner fa-spin"></i> Loading salon data...
+          </div>
+        ) : (
+          <form className="owner-form" onSubmit={handleSubmit} autoComplete="off">
+            <div className="owner-form-group">
+              <label htmlFor="name">Name:</label>
+              <input
+                id="name"
+                type="text"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
+              />
             </div>
-          </section>
-        </div>
-      </main>
 
-      <Footer />
-    </div>
+            <div className="owner-form-group">
+              <label htmlFor="location">Location:</label>
+              <input
+                id="location"
+                type="text"
+                required
+                value={formData.location}
+                onChange={(e) => setFormData((p) => ({ ...p, location: e.target.value }))}
+              />
+            </div>
+
+            <div className="owner-form-group">
+              <label htmlFor="img">Img:</label>
+              <div style={{
+                background: '#242424',
+                border: '2px solid rgba(212, 175, 55, 0.3)',
+                borderRadius: '8px',
+                padding: '10px 12px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px',
+              }}>
+                {existingImg && (
+                  <div style={{ fontSize: '0.85rem', color: '#aaa' }}>
+                    Currently:{' '}
+                    <a
+                      href={getImageUrl(existingImg)}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: '#d4af37', textDecoration: 'underline' }}
+                    >
+                      {existingImg}
+                    </a>
+                  </div>
+                )}
+                <div>
+                  <span style={{ fontSize: '0.9rem', color: '#ccc', marginRight: '8px' }}>
+                    Change:
+                  </span>
+                  <input
+                    id="img"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    style={{
+                      color: '#ffffff',
+                      fontSize: '0.9rem',
+                      background: 'transparent',
+                      border: 'none',
+                      padding: 0,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="owner-form-group">
+              <label htmlFor="numberOfSeats">NumberOfSeats:</label>
+              <input
+                id="numberOfSeats"
+                type="number"
+                min="1"
+                required
+                value={formData.numberOfSeats}
+                onChange={(e) => setFormData((p) => ({ ...p, numberOfSeats: e.target.value }))}
+              />
+            </div>
+
+            <div className="owner-form-group">
+              <label htmlFor="areaId">Area:</label>
+              <select
+                id="areaId"
+                required
+                value={formData.areaId}
+                onChange={(e) => setFormData((p) => ({ ...p, areaId: e.target.value }))}
+              >
+                <option value="">--Select Area--</option>
+                {filteredAreas.map((area) => (
+                  <option key={area.id} value={area.id}>
+                    {area.AreaName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="owner-form-group">
+              <label htmlFor="cityId">City:</label>
+              <select
+                id="cityId"
+                required
+                value={formData.cityId}
+                onChange={(e) => handleCityChange(e.target.value)}
+              >
+                <option value="">--Select City--</option>
+                {cities.map((city) => (
+                  <option key={city.id} value={city.id}>
+                    {city.CityName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="owner-form-group">
+              <label htmlFor="openTime">OpenTime:</label>
+              <input
+                id="openTime"
+                type="text"
+                required
+                value={formData.openTime}
+                onChange={(e) => setFormData((p) => ({ ...p, openTime: e.target.value }))}
+              />
+            </div>
+
+            <div className="owner-form-group">
+              <label htmlFor="closeTime">CloseTime:</label>
+              <input
+                id="closeTime"
+                type="text"
+                required
+                value={formData.closeTime}
+                onChange={(e) => setFormData((p) => ({ ...p, closeTime: e.target.value }))}
+              />
+            </div>
+
+            <div className="owner-form-group">
+              <label htmlFor="type">Type:</label>
+              <select
+                id="type"
+                required
+                value={formData.type}
+                onChange={(e) => setFormData((p) => ({ ...p, type: e.target.value }))}
+              >
+                <option value="Unisex">Unisex</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+            </div>
+
+            <button type="submit" className="owner-btn-save" disabled={saving}>
+              {saving ? 'Saving Changes...' : 'Save Changes'}
+            </button>
+          </form>
+        )}
+      </div>
+    </OwnerLayout>
   );
 };
 

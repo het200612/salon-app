@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from '../../components/Navbar';
-import Footer from '../../components/Footer';
-import OwnerSidebar from '../../components/OwnerSidebar';
+import OwnerLayout from '../../components/OwnerLayout';
 import api from '../../services/api';
 
 export const ManageServicesPage = () => {
@@ -23,10 +21,12 @@ export const ManageServicesPage = () => {
       setLoading(true);
       setError('');
       const res = await api.get('/owner/services');
-      setAllServices(res.data.allServices || []);
-      setSelectedServices(res.data.selectedServices || []);
-      if (res.data.allServices?.length > 0) {
-        setSelectedServiceId(res.data.allServices[0].id);
+      const all = res.data.allServices || [];
+      const selected = res.data.selectedServices || [];
+      setAllServices(all);
+      setSelectedServices(selected);
+      if (all.length > 0 && !selectedServiceId) {
+        setSelectedServiceId(all[0].id);
       }
     } catch (err) {
       console.error('Failed to load owner services:', err);
@@ -61,202 +61,226 @@ export const ManageServicesPage = () => {
     }
   };
 
+  const handleDeleteService = async (serviceId, serviceName) => {
+    if (!window.confirm(`Are you sure you want to remove "${serviceName}" from your salon offerings?`)) {
+      return;
+    }
+
+    try {
+      setError('');
+      setMessage('');
+      await api.delete(`/owner/services/${serviceId}`);
+      setMessage(`"${serviceName}" removed from your salon.`);
+      fetchServicesData();
+      setTimeout(() => setMessage(''), 4000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to remove service.');
+    }
+  };
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#0F1015' }}>
-      <Navbar />
-
-      <main style={{ flex: 1, maxWidth: '1280px', width: '100%', margin: '2rem auto', padding: '0 1.5rem' }}>
-        <div style={{
-          display: 'flex',
-          gap: '2rem',
-          flexDirection: 'row',
-          alignItems: 'flex-start',
+    <OwnerLayout activeMenu="services">
+      <div style={{ maxWidth: '800px', margin: '0 auto', width: '100%' }}>
+        <h1 style={{
+          color: '#d4af37',
+          textAlign: 'center',
+          fontSize: '2rem',
+          fontWeight: '600',
+          marginBottom: '25px',
         }}>
-          <OwnerSidebar />
+          Select Services
+        </h1>
 
-          <section style={{ flex: 1, minWidth: 0 }}>
-            {/* Add / Edit Service Form */}
-            <div style={{
-              backgroundColor: '#181920',
-              border: '1px solid #2E303E',
-              borderRadius: '12px',
-              padding: '2rem',
-              marginBottom: '2rem',
-            }}>
-              <h1 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: '700', margin: '0 0 0.5rem' }}>
-                Manage Salon Services
-              </h1>
-              <p style={{ color: '#9CA3AF', margin: '0 0 1.5rem', fontSize: '0.9rem' }}>
-                Add services from the master catalog and set your custom pricing
-              </p>
+        {message && (
+          <div style={{
+            backgroundColor: 'rgba(46, 204, 113, 0.15)',
+            border: '1px solid #2ecc71',
+            color: '#2ecc71',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            marginBottom: '1.5rem',
+            textAlign: 'center',
+            fontSize: '0.95rem',
+          }}>
+            ✓ {message}
+          </div>
+        )}
 
-              {message && (
-                <div style={{
-                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                  border: '1px solid #10B981',
-                  color: '#10B981',
-                  padding: '0.85rem',
-                  borderRadius: '6px',
-                  marginBottom: '1.25rem',
-                  fontSize: '0.9rem',
-                }}>
-                  ✓ {message}
-                </div>
-              )}
+        {error && (
+          <div style={{
+            backgroundColor: 'rgba(239, 68, 68, 0.15)',
+            border: '1px solid #ef4444',
+            color: '#ef4444',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            marginBottom: '1.5rem',
+            textAlign: 'center',
+            fontSize: '0.95rem',
+          }}>
+            ⚠ {error}
+          </div>
+        )}
 
-              {error && (
-                <div style={{
-                  backgroundColor: 'rgba(239, 68, 68, 0.15)',
-                  border: '1px solid #EF4444',
-                  color: '#EF4444',
-                  padding: '0.85rem',
-                  borderRadius: '6px',
-                  marginBottom: '1.25rem',
-                  fontSize: '0.9rem',
-                }}>
-                  {error}
-                </div>
-              )}
-
-              <form onSubmit={handleAddOrUpdateService} style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-end' }}>
-                <div style={{ flex: '2 1 240px' }}>
-                  <label style={{ display: 'block', color: '#E5E7EB', fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.4rem' }}>
-                    Select Master Service
-                  </label>
-                  <select
-                    value={selectedServiceId}
-                    onChange={(e) => setSelectedServiceId(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      backgroundColor: '#22232D',
-                      border: '1px solid #2E303E',
-                      borderRadius: '8px',
-                      color: '#fff',
-                      fontSize: '0.95rem',
-                      outline: 'none',
-                    }}
-                  >
-                    {allServices.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.ServiceName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div style={{ flex: '1 1 160px' }}>
-                  <label style={{ display: 'block', color: '#E5E7EB', fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.4rem' }}>
-                    Custom Price (₹)
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    required
-                    placeholder="e.g. 350"
-                    value={servicePrice}
-                    onChange={(e) => setServicePrice(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      backgroundColor: '#22232D',
-                      border: '1px solid #2E303E',
-                      borderRadius: '8px',
-                      color: '#fff',
-                      fontSize: '0.95rem',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  style={{
-                    backgroundColor: '#daa520',
-                    color: '#121212',
-                    padding: '0.75rem 1.75rem',
-                    borderRadius: '8px',
-                    border: 'none',
-                    fontSize: '0.95rem',
-                    fontWeight: '700',
-                    cursor: submitting ? 'not-allowed' : 'pointer',
-                    opacity: submitting ? 0.7 : 1,
-                    height: '46px',
-                  }}
-                >
-                  {submitting ? 'Saving...' : 'Add / Update Service'}
-                </button>
-              </form>
+        {/* Add Service Card matching SelectServices.html */}
+        <div style={{
+          backgroundColor: '#1e1e1e',
+          padding: '30px',
+          borderRadius: '10px',
+          border: '1px solid #d4af37',
+          boxShadow: '0 0 15px rgba(212, 175, 55, 0.2)',
+          marginBottom: '2.5rem',
+        }}>
+          <form onSubmit={handleAddOrUpdateService}>
+            <div style={{ marginBottom: '18px' }}>
+              <label style={{
+                color: '#fff',
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '500',
+              }}>
+                ServiceName:
+              </label>
+              <select
+                value={selectedServiceId}
+                onChange={(e) => setSelectedServiceId(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  border: '1px solid #d4af37',
+                  backgroundColor: '#2d2d2d',
+                  color: '#fff',
+                  borderRadius: '5px',
+                  fontSize: '0.95rem',
+                  outline: 'none',
+                }}
+              >
+                {allServices.map((svc) => (
+                  <option key={svc.id} value={svc.id}>
+                    {svc.ServiceName}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            {/* Currently Offered Services Table */}
-            <div style={{
-              backgroundColor: '#181920',
-              border: '1px solid #2E303E',
-              borderRadius: '12px',
-              padding: '1.5rem',
-            }}>
-              <h2 style={{ color: '#fff', fontSize: '1.3rem', margin: '0 0 1.25rem' }}>
-                Active Salon Services ({selectedServices.length})
-              </h2>
-
-              {loading ? (
-                <div style={{ color: '#daa520', padding: '2rem', textAlign: 'center' }}>Loading services...</div>
-              ) : selectedServices.length === 0 ? (
-                <div style={{ color: '#9CA3AF', padding: '2rem', textAlign: 'center' }}>
-                  No services added to your salon yet. Select a service above to add it.
-                </div>
-              ) : (
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '2px solid #2E303E', color: '#9CA3AF', textTransform: 'uppercase', fontSize: '0.75rem' }}>
-                      <th style={{ padding: '0.75rem 1rem' }}>ID</th>
-                      <th style={{ padding: '0.75rem 1rem' }}>Service Name</th>
-                      <th style={{ padding: '0.75rem 1rem' }}>Price</th>
-                      <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Quick Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selectedServices.map((s) => (
-                      <tr key={s.id} style={{ borderBottom: '1px solid #2E303E', color: '#fff' }}>
-                        <td style={{ padding: '1rem', color: '#daa520', fontWeight: '600' }}>#{s.id}</td>
-                        <td style={{ padding: '1rem', fontWeight: '600' }}>{s.ServiceName}</td>
-                        <td style={{ padding: '1rem', color: '#10B981', fontWeight: '700', fontSize: '1.05rem' }}>
-                          ₹{s.Price}
-                        </td>
-                        <td style={{ padding: '1rem', textAlign: 'right' }}>
-                          <button
-                            onClick={() => {
-                              setSelectedServiceId(s.ServiceMstId);
-                              setServicePrice(s.Price);
-                            }}
-                            style={{
-                              backgroundColor: '#22232D',
-                              border: '1px solid #2E303E',
-                              color: '#daa520',
-                              padding: '4px 10px',
-                              borderRadius: '4px',
-                              fontSize: '0.8rem',
-                              fontWeight: '600',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            Edit Price
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+            <div style={{ marginBottom: '18px' }}>
+              <label style={{
+                color: '#fff',
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '500',
+              }}>
+                Price (₹):
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                placeholder="Enter price in ₹"
+                required
+                value={servicePrice}
+                onChange={(e) => setServicePrice(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  border: '1px solid #d4af37',
+                  backgroundColor: '#2d2d2d',
+                  color: '#fff',
+                  borderRadius: '5px',
+                  fontSize: '0.95rem',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
             </div>
-          </section>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              style={{
+                backgroundColor: '#d4af37',
+                color: '#121212',
+                padding: '12px 24px',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                width: '100%',
+                fontWeight: 'bold',
+                marginTop: '10px',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#b39030';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#d4af37';
+              }}
+            >
+              {submitting ? 'Saving...' : 'Save'}
+            </button>
+          </form>
         </div>
-      </main>
 
-      <Footer />
-    </div>
+        {/* Existing Services Table */}
+        <h2 style={{ color: '#fff', fontSize: '1.4rem', fontWeight: '600', marginBottom: '1rem' }}>
+          Current Salon Offerings ({selectedServices.length})
+        </h2>
+
+        {loading ? (
+          <div style={{ textAlign: 'center', color: '#d4af37', padding: '2rem' }}>
+            <i className="fas fa-spinner fa-spin"></i> Loading services...
+          </div>
+        ) : selectedServices.length === 0 ? (
+          <div style={{ textAlign: 'center', color: '#888', padding: '2rem' }}>
+            No services added yet. Use the form above to add your first salon service.
+          </div>
+        ) : (
+          <div style={{
+            backgroundColor: '#1a1a1a',
+            borderRadius: '10px',
+            border: '1px solid rgba(212, 175, 55, 0.15)',
+            overflow: 'hidden',
+          }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid #d4af37', color: '#d4af37' }}>
+                  <th style={{ padding: '14px 18px' }}>Service Name</th>
+                  <th style={{ padding: '14px 18px' }}>Price</th>
+                  <th style={{ padding: '14px 18px', textAlign: 'right' }}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedServices.map((svc) => (
+                  <tr key={svc.id} style={{ borderBottom: '1px solid #2a2a2a' }}>
+                    <td style={{ padding: '14px 18px', fontWeight: '500', color: '#fff' }}>
+                      {svc.ServiceName}
+                    </td>
+                    <td style={{ padding: '14px 18px', color: '#d4af37', fontWeight: '700' }}>
+                      ₹{svc.Price}
+                    </td>
+                    <td style={{ padding: '14px 18px', textAlign: 'right' }}>
+                      <button
+                        onClick={() => handleDeleteService(svc.id, svc.ServiceName)}
+                        style={{
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          color: '#ef4444',
+                          cursor: 'pointer',
+                          fontWeight: '600',
+                          fontSize: '0.9rem',
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </OwnerLayout>
   );
 };
 

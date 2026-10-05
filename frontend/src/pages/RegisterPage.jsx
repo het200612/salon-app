@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
-import authBg from '../assets/auth-bg.jpg';
+import logoEmblem from '../assets/logo-emblem.png';
+const authBg = 'https://images.pexels.com/photos/1319459/pexels-photo-1319459.jpeg?auto=compress&cs=tinysrgb&w=600';
 
 export const RegisterPage = () => {
   const navigate = useNavigate();
@@ -137,6 +138,27 @@ export const RegisterPage = () => {
             flexDirection: 'column',
           }}
         >
+          {/* Circular Logo on top */}
+          <div style={{
+            width: '4.5rem',
+            height: '4.5rem',
+            borderRadius: '50%',
+            border: '1px solid #1a1a1a',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 1rem auto',
+            overflow: 'hidden',
+            backgroundColor: '#ffffff',
+          }}>
+            <img
+              src={logoEmblem}
+              alt="Logo Emblem"
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+          </div>
+
           {/* Title */}
           <h1 style={{
             color: '#333333',

@@ -7,7 +7,7 @@ const { generateSlots } = require('../utils/generateSlots');
  */
 async function getSalons(req, res) {
   try {
-    const { area } = req.query;
+    const { area, city, cityId, search } = req.query;
     let query = `
       SELECT 
         s.id, s.Name, s.Location, s.Img, s.Status, s.NumberOfSeats,
@@ -26,6 +26,30 @@ async function getSalons(req, res) {
     if (area) {
       query += ' AND s.Area_id = ?';
       params.push(area);
+    }
+    if (cityId) {
+      query += ' AND s.City_id = ?';
+      params.push(cityId);
+    } else if (city) {
+      query += ' AND LOWER(c.CityName) = LOWER(?)';
+      params.push(city);
+    }
+
+    if (search && search.trim()) {
+      const term = `%${search.trim()}%`;
+      query += ` AND (
+        s.Name LIKE ? 
+        OR a.AreaName LIKE ? 
+        OR c.CityName LIKE ? 
+        OR s.Location LIKE ?
+        OR s.id IN (
+          SELECT ss.SalonId_id 
+          FROM selectedservicesmst ss 
+          JOIN servicemst sm ON ss.ServiceName_id = sm.id 
+          WHERE sm.ServiceName LIKE ?
+        )
+      )`;
+      params.push(term, term, term, term, term);
     }
 
     query += ' ORDER BY s.id DESC';
@@ -188,7 +212,26 @@ async function getSalonSlots(req, res) {
  */
 async function getAreas(req, res) {
   try {
-    const [areas] = await pool.query('SELECT id, AreaName, City_id FROM areamst ORDER BY AreaName ASC');
+    const { cityId, city, CityName_id } = req.query || {};
+    const targetCityId = cityId || CityName_id;
+    let query = `
+      SELECT a.id, a.AreaName, a.CityName_id, c.CityName,
+             COUNT(CASE WHEN s.Status = 'active' THEN s.id END) AS salonCount
+      FROM areamst a
+      JOIN citymst c ON a.CityName_id = c.id
+      LEFT JOIN salonmst s ON s.Area_id = a.id
+    `;
+    const params = [];
+    if (targetCityId) {
+      query += ' WHERE a.CityName_id = ?';
+      params.push(targetCityId);
+    } else if (city) {
+      query += ' WHERE LOWER(c.CityName) = LOWER(?)';
+      params.push(city);
+    }
+    query += ' GROUP BY a.id, a.AreaName, a.CityName_id, c.CityName';
+    query += ' ORDER BY a.AreaName ASC';
+    const [areas] = await pool.query(query, params);
     return res.json(areas);
   } catch (err) {
     console.error('Get areas error:', err);

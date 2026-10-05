@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import logoEmblem from '../assets/logo-emblem.png';
 
 export const Footer = () => {
   return (
@@ -20,14 +21,27 @@ export const Footer = () => {
       }}>
         {/* Column 1: Brand */}
         <div>
-          <h3 style={{
-            fontFamily: 'var(--font-serif)',
-            color: 'var(--color-primary)',
-            fontSize: '1.5rem',
-            marginBottom: '1rem',
-          }}>
-            Hair Harmony
-          </h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
+            <img
+              src={logoEmblem}
+              alt="Hair Harmony Symbol"
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                objectFit: 'cover',
+                border: '1.5px solid var(--color-primary)',
+              }}
+            />
+            <h3 style={{
+              fontFamily: 'var(--font-serif)',
+              color: 'var(--color-primary)',
+              fontSize: '1.5rem',
+              margin: 0,
+            }}>
+              Hair Harmony
+            </h3>
+          </div>
           <p style={{ fontSize: '0.9rem', lineHeight: '1.6', maxWidth: '300px' }}>
             Elevating your grooming experience with premium salons, expert stylists, and effortless digital booking.
           </p>

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from '../../components/Navbar';
-import Footer from '../../components/Footer';
-import AdminSidebar from '../../components/AdminSidebar';
+import { Link } from 'react-router-dom';
+import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 
 export const ManageCitiesPage = () => {
@@ -12,6 +11,7 @@ export const ManageCitiesPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [viewMode, setViewMode] = useState('form'); // 'form' or 'list'
 
   useEffect(() => {
     fetchCities();
@@ -50,7 +50,7 @@ export const ManageCitiesPage = () => {
       }
 
       setCityName('');
-      fetchCities();
+      await fetchCities();
       setTimeout(() => setMessage(''), 4000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to save city.');
@@ -62,11 +62,7 @@ export const ManageCitiesPage = () => {
   const handleEdit = (city) => {
     setEditingCity(city);
     setCityName(city.CityName);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingCity(null);
-    setCityName('');
+    setViewMode('form');
   };
 
   const handleDelete = async (id, name) => {
@@ -75,7 +71,7 @@ export const ManageCitiesPage = () => {
     try {
       await api.delete(`/admin/cities/${id}`);
       setMessage(`City '${name}' deleted.`);
-      fetchCities();
+      await fetchCities();
       setTimeout(() => setMessage(''), 4000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to delete city.');
@@ -83,194 +79,131 @@ export const ManageCitiesPage = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#0F1015' }}>
-      <Navbar />
+    <AdminLayout headerTitle="Dashboard Overview" activeMenu="cities">
+      {message && <div className="admin-banner-success">✓ {message}</div>}
+      {error && <div className="admin-banner-error">⚠ {error}</div>}
 
-      <main style={{ flex: 1, maxWidth: '1280px', width: '100%', margin: '2rem auto', padding: '0 1.5rem' }}>
-        <div style={{
-          display: 'flex',
-          gap: '2rem',
-          flexDirection: 'row',
-          alignItems: 'flex-start',
-        }}>
-          <AdminSidebar />
+      {viewMode === 'form' ? (
+        /* Add / Edit City Form matching Page 1 Screenshot 2 */
+        <div className="admin-form-container">
+          <form className="admin-form-box" onSubmit={handleSubmit} autoComplete="off">
+            <h2 className="admin-form-title">
+              {editingCity ? 'Edit City' : 'Add City'}
+            </h2>
 
-          <section style={{ flex: 1, minWidth: 0 }}>
-            {/* Add / Edit City Form */}
-            <div style={{
-              backgroundColor: '#181920',
-              border: '1px solid #2E303E',
-              borderRadius: '12px',
-              padding: '2rem',
-              marginBottom: '2rem',
-            }}>
-              <h1 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: '700', margin: '0 0 0.5rem' }}>
-                {editingCity ? 'Edit City' : 'Add New City'}
-              </h1>
-              <p style={{ color: '#9CA3AF', margin: '0 0 1.5rem', fontSize: '0.9rem' }}>
-                Manage operational cities where salons can register
-              </p>
-
-              {message && (
-                <div style={{
-                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                  border: '1px solid #10B981',
-                  color: '#10B981',
-                  padding: '0.85rem',
-                  borderRadius: '6px',
-                  marginBottom: '1.25rem',
-                  fontSize: '0.9rem',
-                }}>
-                  ✓ {message}
-                </div>
-              )}
-
-              {error && (
-                <div style={{
-                  backgroundColor: 'rgba(239, 68, 68, 0.15)',
-                  border: '1px solid #EF4444',
-                  color: '#EF4444',
-                  padding: '0.85rem',
-                  borderRadius: '6px',
-                  marginBottom: '1.25rem',
-                  fontSize: '0.9rem',
-                }}>
-                  {error}
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                <input
-                  type="text"
-                  required
-                  placeholder="Enter city name (e.g. Surat, Ahmedabad)"
-                  value={cityName}
-                  onChange={(e) => setCityName(e.target.value)}
-                  style={{
-                    flex: 1,
-                    padding: '0.75rem 1rem',
-                    backgroundColor: '#22232D',
-                    border: '1px solid #2E303E',
-                    borderRadius: '8px',
-                    color: '#fff',
-                    fontSize: '0.95rem',
-                    outline: 'none',
-                  }}
-                />
-
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  style={{
-                    backgroundColor: '#daa520',
-                    color: '#121212',
-                    padding: '0.75rem 1.75rem',
-                    borderRadius: '8px',
-                    border: 'none',
-                    fontSize: '0.95rem',
-                    fontWeight: '700',
-                    cursor: submitting ? 'not-allowed' : 'pointer',
-                    opacity: submitting ? 0.7 : 1,
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {submitting ? 'Saving...' : editingCity ? 'Update City' : 'Add City'}
-                </button>
-
-                {editingCity && (
-                  <button
-                    type="button"
-                    onClick={handleCancelEdit}
-                    style={{
-                      backgroundColor: '#22232D',
-                      color: '#9CA3AF',
-                      padding: '0.75rem 1.25rem',
-                      borderRadius: '8px',
-                      border: '1px solid #2E303E',
-                      fontSize: '0.95rem',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Cancel
-                  </button>
-                )}
-              </form>
+            <div className="admin-form-group">
+              <input
+                type="text"
+                required
+                placeholder="City Name"
+                value={cityName}
+                onChange={(e) => setCityName(e.target.value)}
+              />
             </div>
 
-            {/* Cities Table */}
-            <div style={{
-              backgroundColor: '#181920',
-              border: '1px solid #2E303E',
-              borderRadius: '12px',
-              padding: '1.5rem',
-            }}>
-              <h2 style={{ color: '#fff', fontSize: '1.3rem', margin: '0 0 1.25rem' }}>
-                Existing Cities ({cities.length})
-              </h2>
+            <button type="submit" className="admin-btn-save" disabled={submitting}>
+              {submitting ? 'Saving...' : editingCity ? 'Update' : 'Save'}
+            </button>
 
-              {loading ? (
-                <div style={{ color: '#daa520', padding: '2rem', textAlign: 'center' }}>Loading cities...</div>
-              ) : cities.length === 0 ? (
-                <div style={{ color: '#9CA3AF', padding: '2rem', textAlign: 'center' }}>No cities found.</div>
-              ) : (
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '2px solid #2E303E', color: '#9CA3AF', textTransform: 'uppercase', fontSize: '0.75rem' }}>
-                      <th style={{ padding: '0.75rem 1rem' }}>ID</th>
-                      <th style={{ padding: '0.75rem 1rem' }}>City Name</th>
-                      <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {cities.map((c) => (
-                      <tr key={c.id} style={{ borderBottom: '1px solid #2E303E', color: '#fff' }}>
-                        <td style={{ padding: '1rem', color: '#daa520', fontWeight: '600' }}>#{c.id}</td>
-                        <td style={{ padding: '1rem', fontWeight: '600' }}>{c.CityName}</td>
-                        <td style={{ padding: '1rem', textAlign: 'right' }}>
-                          <button
-                            onClick={() => handleEdit(c)}
-                            style={{
-                              backgroundColor: '#22232D',
-                              border: '1px solid #2E303E',
-                              color: '#daa520',
-                              padding: '4px 10px',
-                              borderRadius: '4px',
-                              fontSize: '0.8rem',
-                              fontWeight: '600',
-                              cursor: 'pointer',
-                              marginRight: '0.5rem',
-                            }}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDelete(c.id, c.CityName)}
-                            style={{
-                              backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                              border: '1px solid #EF4444',
-                              color: '#EF4444',
-                              padding: '4px 10px',
-                              borderRadius: '4px',
-                              fontSize: '0.8rem',
-                              fontWeight: '600',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </section>
+            {editingCity && (
+              <button
+                type="button"
+                className="admin-toggle-link"
+                onClick={() => {
+                  setEditingCity(null);
+                  setCityName('');
+                }}
+              >
+                Cancel Edit
+              </button>
+            )}
+
+            <button
+              type="button"
+              className="admin-toggle-link"
+              onClick={() => setViewMode('list')}
+            >
+              Show List of Cities
+            </button>
+          </form>
         </div>
-      </main>
+      ) : (
+        /* List View matching CityList.html */
+        <div className="admin-list-container">
+          <div className="admin-list-header-row">
+            <h3 className="admin-list-title">Cities List</h3>
+            <button
+              type="button"
+              className="admin-toggle-link"
+              style={{ fontSize: '1.1rem', fontWeight: '600' }}
+              onClick={() => {
+                setEditingCity(null);
+                setCityName('');
+                setViewMode('form');
+              }}
+            >
+              + Add New
+            </button>
+          </div>
 
-      <Footer />
-    </div>
+          <table className="admin-list-table">
+            <thead>
+              <tr>
+                <th>City Id</th>
+                <th>City Name</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={3} style={{ padding: '2rem', color: '#d4af37' }}>
+                    Loading cities...
+                  </td>
+                </tr>
+              ) : cities.length === 0 ? (
+                <tr>
+                  <td colSpan={3} style={{ padding: '2rem', color: '#aaaaaa' }}>
+                    No cities found. Click "+ Add New" to create one.
+                  </td>
+                </tr>
+              ) : (
+                cities.map((city) => (
+                  <tr key={city.id}>
+                    <td>{city.id}</td>
+                    <td>
+                      <Link
+                        to={`/admin/areas?cityId=${city.id}`}
+                        title={`View areas in ${city.CityName}`}
+                        style={{ color: '#d4af37', textDecoration: 'none', cursor: 'pointer' }}
+                      >
+                        {city.CityName}
+                      </Link>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="admin-action-link"
+                        onClick={() => handleEdit(city)}
+                      >
+                        Update
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-action-link delete"
+                        onClick={() => handleDelete(city.id, city.CityName)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </AdminLayout>
   );
 };
 

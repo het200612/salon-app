@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from '../../components/Navbar';
-import Footer from '../../components/Footer';
-import OwnerSidebar from '../../components/OwnerSidebar';
+import OwnerLayout from '../../components/OwnerLayout';
 import { getImageUrl } from '../../utils/imageUrl';
 import api from '../../services/api';
 
 export const UploadImagesPage = () => {
   const [images, setImages] = useState([]);
-  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [fileInputs, setFileInputs] = useState([null, null, null, null, null]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState('');
@@ -31,13 +29,19 @@ export const UploadImagesPage = () => {
     }
   };
 
-  const handleFileChange = (e) => {
-    setSelectedFiles(Array.from(e.target.files));
+  const handleFileChange = (index, file) => {
+    setFileInputs((prev) => {
+      const copy = [...prev];
+      copy[index] = file;
+      return copy;
+    });
   };
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (selectedFiles.length === 0) {
+    const validFiles = fileInputs.filter((f) => f !== null);
+
+    if (validFiles.length === 0) {
       setError('Please choose at least one photo to upload.');
       return;
     }
@@ -48,7 +52,7 @@ export const UploadImagesPage = () => {
 
     try {
       const data = new FormData();
-      selectedFiles.forEach((file) => {
+      validFiles.forEach((file) => {
         data.append('images', file);
       });
 
@@ -56,185 +60,139 @@ export const UploadImagesPage = () => {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      setMessage(res.data?.message || 'Photos uploaded successfully!');
-      setSelectedFiles([]);
+      setMessage(res.data?.message || 'Images uploaded successfully!');
+      setFileInputs([null, null, null, null, null]);
+      // Reset HTML file input values
+      for (let i = 0; i < 5; i++) {
+        const el = document.getElementById(`fileInput_${i}`);
+        if (el) el.value = '';
+      }
       fetchImages();
       setTimeout(() => setMessage(''), 4000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to upload photos.');
+      setError(err.response?.data?.message || 'Failed to upload images.');
     } finally {
       setUploading(false);
     }
   };
 
+  const handleDeleteImage = async (imageId) => {
+    if (!window.confirm('Are you sure you want to remove this photo from your salon gallery?')) {
+      return;
+    }
+
+    try {
+      setError('');
+      setMessage('');
+      await api.delete(`/owner/images/${imageId}`);
+      setMessage('Photo removed successfully.');
+      fetchImages();
+      setTimeout(() => setMessage(''), 4000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to remove photo.');
+    }
+  };
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#0F1015' }}>
-      <Navbar />
-
-      <main style={{ flex: 1, maxWidth: '1280px', width: '100%', margin: '2rem auto', padding: '0 1.5rem' }}>
+    <OwnerLayout activeMenu="images">
+      {message && (
         <div style={{
-          display: 'flex',
-          gap: '2rem',
-          flexDirection: 'row',
-          alignItems: 'flex-start',
+          backgroundColor: 'rgba(46, 204, 113, 0.15)',
+          border: '1px solid #2ecc71',
+          color: '#2ecc71',
+          padding: '12px 16px',
+          borderRadius: '8px',
+          marginBottom: '1.5rem',
+          textAlign: 'center',
+          fontSize: '0.95rem',
         }}>
-          <OwnerSidebar />
-
-          <section style={{ flex: 1, minWidth: 0 }}>
-            {/* Upload Box */}
-            <div style={{
-              backgroundColor: '#181920',
-              border: '1px solid #2E303E',
-              borderRadius: '12px',
-              padding: '2rem',
-              marginBottom: '2rem',
-            }}>
-              <h1 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: '700', margin: '0 0 0.5rem' }}>
-                Salon Photo Gallery
-              </h1>
-              <p style={{ color: '#9CA3AF', margin: '0 0 1.5rem', fontSize: '0.9rem' }}>
-                Upload high-resolution photos of your interior, styling chairs, and equipment (Up to 5 images at once)
-              </p>
-
-              {message && (
-                <div style={{
-                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                  border: '1px solid #10B981',
-                  color: '#10B981',
-                  padding: '0.85rem',
-                  borderRadius: '6px',
-                  marginBottom: '1.25rem',
-                  fontSize: '0.9rem',
-                }}>
-                  ✓ {message}
-                </div>
-              )}
-
-              {error && (
-                <div style={{
-                  backgroundColor: 'rgba(239, 68, 68, 0.15)',
-                  border: '1px solid #EF4444',
-                  color: '#EF4444',
-                  padding: '0.85rem',
-                  borderRadius: '6px',
-                  marginBottom: '1.25rem',
-                  fontSize: '0.9rem',
-                }}>
-                  {error}
-                </div>
-              )}
-
-              <form onSubmit={handleUpload}>
-                <div style={{
-                  border: '2px dashed #2E303E',
-                  borderRadius: '10px',
-                  padding: '2rem',
-                  textAlign: 'center',
-                  backgroundColor: '#22232D',
-                  marginBottom: '1.25rem',
-                }}>
-                  <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>📸</div>
-                  <label style={{
-                    display: 'inline-block',
-                    backgroundColor: '#daa520',
-                    color: '#121212',
-                    padding: '8px 18px',
-                    borderRadius: '6px',
-                    fontSize: '0.9rem',
-                    fontWeight: '700',
-                    cursor: 'pointer',
-                    marginBottom: '0.5rem',
-                  }}>
-                    Select Photos
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      style={{ display: 'none' }}
-                    />
-                  </label>
-                  <p style={{ color: '#9CA3AF', fontSize: '0.8rem', margin: 0 }}>
-                    {selectedFiles.length > 0
-                      ? `${selectedFiles.length} file(s) selected: ${selectedFiles.map((f) => f.name).join(', ')}`
-                      : 'Supports JPG, PNG, WEBP (Max 5 files)'}
-                  </p>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={uploading || selectedFiles.length === 0}
-                  style={{
-                    backgroundColor: '#daa520',
-                    color: '#121212',
-                    padding: '0.8rem 1.75rem',
-                    borderRadius: '8px',
-                    border: 'none',
-                    fontSize: '0.95rem',
-                    fontWeight: '700',
-                    cursor: uploading || selectedFiles.length === 0 ? 'not-allowed' : 'pointer',
-                    opacity: uploading || selectedFiles.length === 0 ? 0.6 : 1,
-                  }}
-                >
-                  {uploading ? 'Uploading...' : 'Upload Photos'}
-                </button>
-              </form>
-            </div>
-
-            {/* Gallery Grid */}
-            <div style={{
-              backgroundColor: '#181920',
-              border: '1px solid #2E303E',
-              borderRadius: '12px',
-              padding: '1.5rem',
-            }}>
-              <h2 style={{ color: '#fff', fontSize: '1.3rem', margin: '0 0 1.25rem' }}>
-                Uploaded Images ({images.length})
-              </h2>
-
-              {loading ? (
-                <div style={{ color: '#daa520', padding: '2rem', textAlign: 'center' }}>Loading gallery...</div>
-              ) : images.length === 0 ? (
-                <div style={{ color: '#9CA3AF', padding: '2rem', textAlign: 'center' }}>
-                  No photos uploaded to your salon gallery yet.
-                </div>
-              ) : (
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-                  gap: '1rem',
-                }}>
-                  {images.map((img) => (
-                    <div
-                      key={img.id}
-                      style={{
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        backgroundColor: '#22232D',
-                        border: '1px solid #2E303E',
-                        height: '140px',
-                      }}
-                    >
-                      <img
-                        src={getImageUrl(img.Img || img.img)}
-                        alt="Salon gallery item"
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                        }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
+          ✓ {message}
         </div>
-      </main>
+      )}
 
-      <Footer />
-    </div>
+      {error && (
+        <div style={{
+          backgroundColor: 'rgba(239, 68, 68, 0.15)',
+          border: '1px solid #ef4444',
+          color: '#ef4444',
+          padding: '12px 16px',
+          borderRadius: '8px',
+          marginBottom: '1.5rem',
+          textAlign: 'center',
+          fontSize: '0.95rem',
+        }}>
+          ⚠ {error}
+        </div>
+      )}
+
+      {/* Upload Images Form matching Page 2 Screenshot */}
+      <div className="owner-upload-card">
+        <h1 className="owner-upload-title">Upload Images</h1>
+        <p className="owner-upload-note">NOTE: You Can Upload 5 Images At Once</p>
+
+        <form onSubmit={handleUpload}>
+          <div className="owner-file-inputs-table">
+            {[0, 1, 2, 3, 4].map((idx) => (
+              <div key={idx} className="owner-file-row">
+                <input
+                  id={`fileInput_${idx}`}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) =>
+                    handleFileChange(idx, e.target.files ? e.target.files[0] : null)
+                  }
+                />
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="submit"
+            className="owner-btn-save"
+            style={{ width: '100%', marginTop: 0 }}
+            disabled={uploading}
+          >
+            {uploading ? 'Uploading...' : 'Upload'}
+          </button>
+        </form>
+      </div>
+
+      {/* Images Uploaded By You Section matching Page 2 Screenshot */}
+      <h2 className="owner-gallery-title">Images Uploaded By You</h2>
+
+      {loading ? (
+        <div style={{ textAlign: 'center', color: '#d4af37', padding: '2rem' }}>
+          <i className="fas fa-spinner fa-spin"></i> Loading images...
+        </div>
+      ) : images.length === 0 ? (
+        <div style={{ textAlign: 'center', color: '#888888', padding: '3rem' }}>
+          No images uploaded yet. Use the form above to add photos to your salon showcase.
+        </div>
+      ) : (
+        <div className="owner-gallery-grid">
+          {images.map((img) => (
+            <div key={img.id} className="owner-gallery-item">
+              <img
+                src={getImageUrl(img.Img)}
+                alt="Salon gallery"
+                onError={(e) => {
+                  e.target.src =
+                    'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500&auto=format&fit=crop&q=80';
+                }}
+              />
+              <button
+                type="button"
+                className="owner-gallery-delete-btn"
+                title="Delete photo"
+                onClick={() => handleDeleteImage(img.id)}
+              >
+                <i className="fas fa-trash"></i>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </OwnerLayout>
   );
 };
 

@@ -1,20 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from '../../components/Navbar';
-import Footer from '../../components/Footer';
-import UserSidebar from '../../components/UserSidebar';
+import { Link, useNavigate } from 'react-router-dom';
+import UserLayout from '../../components/UserLayout';
 import { useAuth } from '../../context/AuthContext';
 import { getImageUrl } from '../../utils/imageUrl';
 import api from '../../services/api';
 
 export const EditProfilePage = () => {
   const { user, login } = useAuth();
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     name: '',
+    userName: '',
+    email: '',
     phoneNumber: '',
   });
+  const [currentImg, setCurrentImg] = useState('');
   const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState('');
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -24,26 +28,28 @@ export const EditProfilePage = () => {
 
   const fetchProfile = async () => {
     try {
+      setFetching(true);
       const res = await api.get('/user/profile');
       if (res.data) {
         setFormData({
-          name: res.data.Name || '',
-          phoneNumber: res.data.PhoneNumber || '',
+          name: res.data.name || res.data.Name || '',
+          userName: res.data.userName || res.data.UserName || '',
+          email: res.data.email || res.data.Email || '',
+          phoneNumber: res.data.phoneNumber || res.data.PhoneNumber || '',
         });
-        if (res.data.Img) {
-          setImagePreview(getImageUrl(res.data.Img));
-        }
+        setCurrentImg(res.data.img || res.data.Img || '');
       }
     } catch (err) {
       console.error('Failed to load profile:', err);
+      setError('Unable to load profile details.');
+    } finally {
+      setFetching(false);
     }
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setImageFile(e.target.files[0]);
     }
   };
 
@@ -53,18 +59,30 @@ export const EditProfilePage = () => {
     setMessage('');
     setError('');
 
+    if (!formData.name.trim() || !formData.userName.trim() || !formData.email.trim() || !formData.phoneNumber.trim()) {
+      setError('All fields (Name, UserName, Email, PhoneNumber) are required.');
+      setLoading(false);
+      return;
+    }
+
+    if (!/^\d{10}$/.test(formData.phoneNumber.trim())) {
+      setError('PhoneNumber must be exactly 10 digits.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const data = new FormData();
-      data.append('name', formData.name);
-      data.append('phoneNumber', formData.phoneNumber);
+      data.append('name', formData.name.trim());
+      data.append('userName', formData.userName.trim());
+      data.append('email', formData.email.trim());
+      data.append('phoneNumber', formData.phoneNumber.trim());
       if (imageFile) {
         data.append('img', imageFile);
       }
 
       const res = await api.put('/user/profile', data, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
 
       setMessage('Profile updated successfully!');
@@ -72,9 +90,11 @@ export const EditProfilePage = () => {
         login({
           user: res.data.user,
           token: localStorage.getItem('token'),
-          role: res.data.user.usertype,
+          role: res.data.user.usertype || user?.usertype || 'User',
         });
+        setCurrentImg(res.data.user.img || currentImg);
       }
+      setTimeout(() => setMessage(''), 4000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update profile.');
     } finally {
@@ -83,191 +103,137 @@ export const EditProfilePage = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#0F1015' }}>
-      <Navbar />
+    <UserLayout activeMenu="edit-profile">
+      <div className="user-edit-container">
+        <h2 className="user-edit-title">Edit Profile</h2>
 
-      <main style={{ flex: 1, maxWidth: '1280px', width: '100%', margin: '2rem auto', padding: '0 1.5rem' }}>
-        <div style={{
-          display: 'flex',
-          gap: '2rem',
-          flexDirection: 'row',
-          alignItems: 'flex-start',
-        }}>
-          {/* User Sidebar */}
-          <UserSidebar />
+        {message && (
+          <div style={{
+            backgroundColor: 'rgba(46, 204, 113, 0.15)',
+            border: '1px solid #2ecc71',
+            color: '#2ecc71',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            marginBottom: '1.5rem',
+            textAlign: 'center',
+            fontSize: '0.95rem',
+          }}>
+            ✓ {message}
+          </div>
+        )}
 
-          {/* Edit Profile Form */}
-          <section style={{ flex: 1, minWidth: 0 }}>
-            <div style={{
-              backgroundColor: '#181920',
-              border: '1px solid #2E303E',
-              borderRadius: '12px',
-              padding: '2rem',
-              maxWidth: '640px',
-            }}>
-              <h1 style={{
-                color: '#fff',
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                margin: '0 0 0.5rem',
-                fontFamily: "'Poppins', sans-serif",
-              }}>
-                Edit Profile
-              </h1>
-              <p style={{ color: '#9CA3AF', margin: '0 0 1.5rem', fontSize: '0.9rem' }}>
-                Update your contact information and profile avatar
-              </p>
+        {error && (
+          <div style={{
+            backgroundColor: 'rgba(239, 68, 68, 0.15)',
+            border: '1px solid #ef4444',
+            color: '#ef4444',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            marginBottom: '1.5rem',
+            textAlign: 'center',
+            fontSize: '0.95rem',
+          }}>
+            ⚠ {error}
+          </div>
+        )}
 
-              {message && (
-                <div style={{
-                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                  border: '1px solid #10B981',
-                  color: '#10B981',
-                  padding: '0.85rem',
-                  borderRadius: '6px',
-                  marginBottom: '1.25rem',
-                  fontSize: '0.9rem',
-                }}>
-                  ✓ {message}
-                </div>
-              )}
-
-              {error && (
-                <div style={{
-                  backgroundColor: 'rgba(239, 68, 68, 0.15)',
-                  border: '1px solid #EF4444',
-                  color: '#EF4444',
-                  padding: '0.85rem',
-                  borderRadius: '6px',
-                  marginBottom: '1.25rem',
-                  fontSize: '0.9rem',
-                }}>
-                  {error}
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit}>
-                {/* Profile Image Section */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '1.5rem',
-                  marginBottom: '1.5rem',
-                  padding: '1rem',
-                  backgroundColor: '#22232D',
-                  borderRadius: '8px',
-                  border: '1px solid #2E303E',
-                }}>
-                  <img
-                    src={imagePreview || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=60'}
-                    alt="Preview"
-                    style={{
-                      width: '72px',
-                      height: '72px',
-                      borderRadius: '50%',
-                      objectFit: 'cover',
-                      border: '2px solid #daa520',
-                    }}
-                  />
-                  <div>
-                    <label style={{
-                      display: 'inline-block',
-                      backgroundColor: '#daa520',
-                      color: '#121212',
-                      padding: '6px 14px',
-                      borderRadius: '6px',
-                      fontSize: '0.85rem',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      marginBottom: '4px',
-                    }}>
-                      Choose Photo
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageChange}
-                        style={{ display: 'none' }}
-                      />
-                    </label>
-                    <p style={{ margin: 0, color: '#9CA3AF', fontSize: '0.75rem' }}>
-                      JPG, PNG, WEBP max 5MB
-                    </p>
-                  </div>
-                </div>
-
-                {/* Name */}
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <label style={{ display: 'block', color: '#E5E7EB', fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.4rem' }}>
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      backgroundColor: '#22232D',
-                      border: '1px solid #2E303E',
-                      borderRadius: '8px',
-                      color: '#fff',
-                      fontSize: '0.95rem',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
-
-                {/* Phone Number */}
-                <div style={{ marginBottom: '1.75rem' }}>
-                  <label style={{ display: 'block', color: '#E5E7EB', fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.4rem' }}>
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    required
-                    value={formData.phoneNumber}
-                    onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                    placeholder="10-digit phone number"
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      backgroundColor: '#22232D',
-                      border: '1px solid #2E303E',
-                      borderRadius: '8px',
-                      color: '#fff',
-                      fontSize: '0.95rem',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  style={{
-                    backgroundColor: '#daa520',
-                    color: '#121212',
-                    padding: '0.85rem 1.75rem',
-                    borderRadius: '8px',
-                    border: 'none',
-                    fontSize: '1rem',
-                    fontWeight: '600',
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    opacity: loading ? 0.7 : 1,
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  {loading ? 'Saving Changes...' : 'Save Changes'}
-                </button>
-              </form>
+        {fetching ? (
+          <div style={{ textAlign: 'center', color: '#d4af37', padding: '2rem' }}>
+            <i className="fas fa-spinner fa-spin"></i> Loading profile...
+          </div>
+        ) : (
+          <form className="user-edit-form" onSubmit={handleSubmit} autoComplete="off">
+            <div className="user-edit-group">
+              <label htmlFor="name">Name:</label>
+              <input
+                id="name"
+                type="text"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
+              />
             </div>
-          </section>
-        </div>
-      </main>
 
-      <Footer />
-    </div>
+            <div className="user-edit-group">
+              <label htmlFor="userName">UserName:</label>
+              <input
+                id="userName"
+                type="text"
+                required
+                value={formData.userName}
+                onChange={(e) => setFormData((p) => ({ ...p, userName: e.target.value }))}
+              />
+            </div>
+
+            <div className="user-edit-group">
+              <label htmlFor="email">Email:</label>
+              <input
+                id="email"
+                type="email"
+                required
+                value={formData.email}
+                onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))}
+              />
+            </div>
+
+            <div className="user-edit-group">
+              <label htmlFor="phoneNumber">PhoneNumber:</label>
+              <input
+                id="phoneNumber"
+                type="text"
+                required
+                value={formData.phoneNumber}
+                onChange={(e) => setFormData((p) => ({ ...p, phoneNumber: e.target.value }))}
+              />
+            </div>
+
+            <div className="user-edit-group">
+              <label htmlFor="imgFile">Img:</label>
+              <div className="user-file-box">
+                {currentImg && (
+                  <div className="user-file-current">
+                    Currently:{' '}
+                    <a
+                      href={getImageUrl(currentImg)}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {currentImg}
+                    </a>
+                  </div>
+                )}
+                <div>
+                  <span style={{ fontSize: '0.9rem', color: '#ccc', marginRight: '8px' }}>
+                    Change:
+                  </span>
+                  <input
+                    id="imgFile"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    style={{
+                      color: '#ffffff',
+                      fontSize: '0.9rem',
+                      background: 'transparent',
+                      border: 'none',
+                      padding: 0,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" className="user-save-btn" disabled={loading}>
+              {loading ? 'Saving Changes...' : 'Save Changes'}
+            </button>
+
+            <Link to="/user/profile" className="user-back-btn">
+              Go Back To Profile
+            </Link>
+          </form>
+        )}
+      </div>
+    </UserLayout>
   );
 };
 

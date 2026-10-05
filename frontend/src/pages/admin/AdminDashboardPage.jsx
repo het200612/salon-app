@@ -1,18 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import AdminSidebar from '../../components/AdminSidebar';
-import { useAuth } from '../../context/AuthContext';
+import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 
 export const AdminDashboardPage = () => {
-  const { logout } = useAuth();
-  const navigate = useNavigate();
-
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
+  const [actionLoadingId, setActionLoadingId] = useState(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+
+  // Row action state: { [ownerId]: { status: 'verified' | 'rejected', reason: '' } }
+  const [rowActions, setRowActions] = useState({});
 
   useEffect(() => {
     fetchDashboard();
@@ -24,384 +22,241 @@ export const AdminDashboardPage = () => {
       setError('');
       const res = await api.get('/admin/dashboard');
       setDashboardData(res.data);
+
+      // Initialize radio selections based on current status
+      const initialActions = {};
+      const list = res.data?.salonRequests || res.data?.owners || [];
+      list.forEach((owner) => {
+        initialActions[owner.id] = {
+          status: (owner.Status || '').toLowerCase() === 'rejected' ? 'rejected' : 'verified',
+          reason: '',
+        };
+      });
+      setRowActions(initialActions);
     } catch (err) {
       console.error('Failed to load admin dashboard:', err);
-      setError('Failed to fetch administrator statistics.');
+      const serverMsg = err.response?.data?.message;
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        setError(serverMsg || 'Admin session expired or access unauthorized. Please log in with Administrator credentials.');
+      } else {
+        setError(serverMsg || 'Failed to fetch administrator statistics.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleUpdateOwnerStatus = async (ownerId, newStatus) => {
+  const handleRadioChange = (ownerId, status) => {
+    setRowActions((prev) => ({
+      ...prev,
+      [ownerId]: {
+        ...prev[ownerId],
+        status,
+      },
+    }));
+  };
+
+  const handleReasonChange = (ownerId, reason) => {
+    setRowActions((prev) => ({
+      ...prev,
+      [ownerId]: {
+        ...prev[ownerId],
+        reason,
+      },
+    }));
+  };
+
+  const handleSubmitStatus = async (ownerId) => {
+    const action = rowActions[ownerId] || { status: 'verified', reason: '' };
     try {
-      setActionLoading(true);
+      setActionLoadingId(ownerId);
       setMessage('');
-      await api.patch(`/admin/owners/${ownerId}/status`, { status: newStatus });
-      setMessage(`Owner #${ownerId} status updated to '${newStatus}'.`);
-      fetchDashboard();
+      setError('');
+
+      await api.patch(`/admin/owners/${ownerId}/status`, {
+        status: action.status,
+        reason: action.reason,
+      });
+
+      setMessage(`Owner #${ownerId} status updated to '${action.status}'.`);
+      await fetchDashboard();
       setTimeout(() => setMessage(''), 4000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update owner status.');
     } finally {
-      setActionLoading(false);
+      setActionLoadingId(null);
     }
   };
 
-  const counts = dashboardData?.counts || {};
-  const salonRequests = (dashboardData?.salonRequests || []).filter(
-    (o) => (o.Status || '').toLowerCase() === 'pending'
-  );
+  const counts = dashboardData?.counts || dashboardData || {};
+  const salonRequests = dashboardData?.salonRequests || dashboardData?.owners || [];
 
   return (
-    <div style={{
-      display: 'flex',
-      minHeight: '100vh',
-      backgroundColor: '#111111',
-      color: '#ffffff',
-      fontFamily: "'Poppins', sans-serif",
-    }}>
-      {/* Left Sidebar */}
-      <AdminSidebar />
-
-      {/* Main Content Area */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        {/* Top Header Bar */}
-        <header style={{
-          height: '65px',
-          backgroundColor: '#161616',
-          borderBottom: '1px solid #222222',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 2rem',
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            color: '#daa520',
-            fontWeight: '600',
-            fontSize: '1.1rem',
-          }}>
-            <span style={{ fontSize: '1.3rem', cursor: 'pointer' }}>☰</span>
-            <span style={{ color: '#ffffff' }}>Dashboard Overview</span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', color: '#daa520' }}>
-            <span title="Notifications" style={{ cursor: 'pointer', fontSize: '1.1rem' }}>🔔</span>
-            <span title="Admin Profile" style={{ cursor: 'pointer', fontSize: '1.1rem' }}>👤</span>
-            <span
-              title="Logout"
-              onClick={() => {
-                logout();
-                navigate('/login');
+    <AdminLayout
+      headerTitle="Dashboard Overview"
+      activeMenu="dashboard"
+      customStats={{
+        totalSalons: counts.totalSalons ?? 0,
+        totalUsers: counts.totalUsers ?? 0,
+        bookingsToday: counts.bookingsToday ?? 0,
+      }}
+    >
+      {message && <div className="admin-banner-success">✓ {message}</div>}
+      {error && (
+        <div className="admin-banner-error" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+          <span>⚠ {error}</span>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={fetchDashboard}
+              style={{
+                backgroundColor: 'transparent',
+                border: '1px solid #e74c3c',
+                color: '#e74c3c',
+                padding: '4px 10px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
               }}
-              style={{ cursor: 'pointer', fontSize: '1.1rem' }}
             >
-              ↪
-            </span>
+              Retry
+            </button>
+            <a
+              href="/login"
+              style={{
+                backgroundColor: '#d4af37',
+                color: '#1a1a1a',
+                padding: '4px 10px',
+                borderRadius: '4px',
+                textDecoration: 'none',
+                fontWeight: '600',
+                fontSize: '0.85rem',
+              }}
+            >
+              Log in as Admin
+            </a>
           </div>
-        </header>
+        </div>
+      )}
 
-        {/* Dashboard Body */}
-        <main style={{ flex: 1, padding: '2rem', maxWidth: '1400px', width: '100%', boxSizing: 'border-box' }}>
-          {message && (
-            <div style={{
-              backgroundColor: 'rgba(16, 185, 129, 0.15)',
-              border: '1px solid #10B981',
-              color: '#10B981',
-              padding: '0.85rem 1.25rem',
-              borderRadius: '8px',
-              marginBottom: '1.5rem',
-              fontSize: '0.9rem',
-            }}>
-              ✓ {message}
-            </div>
-          )}
+      {/* Salon Requests Section */}
+      <div className="admin-salon-requests">
+        <h3 className="admin-request-header">Salon Requests</h3>
 
-          {error && (
-            <div style={{
-              backgroundColor: 'rgba(239, 68, 68, 0.15)',
-              border: '1px solid #EF4444',
-              color: '#EF4444',
-              padding: '0.85rem 1.25rem',
-              borderRadius: '8px',
-              marginBottom: '1.5rem',
-              fontSize: '0.9rem',
-            }}>
-              {error}
-            </div>
-          )}
+        <div style={{ overflowX: 'auto' }}>
+          <table className="admin-request-table">
+            <thead>
+              <tr>
+                <th>Owner Name</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Phone Number</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="admin-no-requests">
+                    Loading requests...
+                  </td>
+                </tr>
+              ) : salonRequests.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="admin-no-requests">
+                    No pending salon requests
+                  </td>
+                </tr>
+              ) : (
+                salonRequests.map((request) => {
+                  const currentAction = rowActions[request.id] || {
+                    status: (request.Status || '').toLowerCase() === 'rejected' ? 'rejected' : 'verified',
+                    reason: '',
+                  };
+                  const isVerified = (request.Status || '').toLowerCase() === 'verified';
+                  const isRejected = (request.Status || '').toLowerCase() === 'rejected';
 
-          {/* 4 Stat Cards */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '1.5rem',
-            marginBottom: '2.5rem',
-          }}>
-            {/* Card 1: Total Salons */}
-            <div style={{
-              backgroundColor: '#181818',
-              borderRadius: '10px',
-              padding: '1.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              border: '1px solid #242424',
-            }}>
-              <div>
-                <div style={{ fontSize: '2.2rem', fontWeight: '700', color: '#ffffff', lineHeight: 1 }}>
-                  {counts.totalSalons || 0}
-                </div>
-                <div style={{ color: '#999999', fontSize: '0.9rem', marginTop: '6px' }}>
-                  Total Salons
-                </div>
-              </div>
-              <div style={{
-                backgroundColor: '#222014',
-                color: '#daa520',
-                width: '46px',
-                height: '46px',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.3rem',
-                border: '1px solid #3d3416',
-              }}>
-                🏪
-              </div>
-            </div>
+                  let badgeClass = 'pending';
+                  let badgeText = 'Pending';
+                  if (isVerified) {
+                    badgeClass = 'verified';
+                    badgeText = 'Verified';
+                  } else if (isRejected) {
+                    badgeClass = 'rejected';
+                    badgeText = 'Rejected';
+                  }
 
-            {/* Card 2: Active Users */}
-            <div style={{
-              backgroundColor: '#181818',
-              borderRadius: '10px',
-              padding: '1.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              border: '1px solid #242424',
-            }}>
-              <div>
-                <div style={{ fontSize: '2.2rem', fontWeight: '700', color: '#ffffff', lineHeight: 1 }}>
-                  {counts.totalUsers || 1}
-                </div>
-                <div style={{ color: '#999999', fontSize: '0.9rem', marginTop: '6px' }}>
-                  Active Users
-                </div>
-              </div>
-              <div style={{
-                backgroundColor: '#222014',
-                color: '#daa520',
-                width: '46px',
-                height: '46px',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.3rem',
-                border: '1px solid #3d3416',
-              }}>
-                👥
-              </div>
-            </div>
-
-            {/* Card 3: Bookings Today */}
-            <div style={{
-              backgroundColor: '#181818',
-              borderRadius: '10px',
-              padding: '1.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              border: '1px solid #242424',
-            }}>
-              <div>
-                <div style={{ fontSize: '2.2rem', fontWeight: '700', color: '#ffffff', lineHeight: 1 }}>
-                  {counts.bookingsToday || 485}
-                </div>
-                <div style={{ color: '#999999', fontSize: '0.9rem', marginTop: '6px' }}>
-                  Bookings Today
-                </div>
-              </div>
-              <div style={{
-                backgroundColor: '#222014',
-                color: '#daa520',
-                width: '46px',
-                height: '46px',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.3rem',
-                border: '1px solid #3d3416',
-              }}>
-                📅
-              </div>
-            </div>
-
-            {/* Card 4: Revenue */}
-            <div style={{
-              backgroundColor: '#181818',
-              borderRadius: '10px',
-              padding: '1.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              border: '1px solid #242424',
-            }}>
-              <div>
-                <div style={{ fontSize: '2.2rem', fontWeight: '700', color: '#ffffff', lineHeight: 1 }}>
-                  ₹{(counts.revenue || 12856).toLocaleString()}
-                </div>
-                <div style={{ color: '#999999', fontSize: '0.9rem', marginTop: '6px' }}>
-                  Revenue
-                </div>
-              </div>
-              <div style={{
-                backgroundColor: '#222014',
-                color: '#daa520',
-                width: '46px',
-                height: '46px',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.3rem',
-                border: '1px solid #3d3416',
-                fontWeight: '700',
-              }}>
-                ₹
-              </div>
-            </div>
-          </div>
-
-          {/* Salon Requests Section */}
-          <div style={{
-            backgroundColor: '#161616',
-            borderRadius: '10px',
-            border: '1px solid #222222',
-            padding: '2rem',
-          }}>
-            <h2 style={{
-              color: '#daa520',
-              fontSize: '1.8rem',
-              fontWeight: '700',
-              margin: '0 0 1.5rem',
-              fontFamily: "'Poppins', sans-serif",
-            }}>
-              Salon Requests
-            </h2>
-
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{
-                width: '100%',
-                borderCollapse: 'collapse',
-                textAlign: 'left',
-                fontSize: '0.95rem',
-              }}>
-                <thead>
-                  <tr style={{
-                    borderBottom: '2px solid #daa520',
-                    color: '#daa520',
-                    fontWeight: '600',
-                  }}>
-                    <th style={{ padding: '1rem 0.75rem' }}>Owner Name</th>
-                    <th style={{ padding: '1rem 0.75rem' }}>Username</th>
-                    <th style={{ padding: '1rem 0.75rem' }}>Email</th>
-                    <th style={{ padding: '1rem 0.75rem' }}>Phone Number</th>
-                    <th style={{ padding: '1rem 0.75rem' }}>Status</th>
-                    <th style={{ padding: '1rem 0.75rem', textAlign: 'right' }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={6} style={{ padding: '3rem', textAlign: 'center', color: '#daa520' }}>
-                        Loading requests...
+                  return (
+                    <tr key={request.id}>
+                      <td style={{ fontWeight: '500' }}>{request.Name}</td>
+                      <td style={{ color: '#cccccc' }}>{request.UserName}</td>
+                      <td style={{ color: '#cccccc' }}>{request.Email}</td>
+                      <td style={{ color: '#cccccc' }}>{request.PhoneNumber}</td>
+                      <td>
+                        <span className={`admin-status-badge ${badgeClass}`}>{badgeText}</span>
                       </td>
-                    </tr>
-                  ) : salonRequests.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        style={{
-                          padding: '2.5rem 0.75rem',
-                          color: '#daa520',
-                          fontStyle: 'italic',
-                          fontSize: '0.95rem',
-                        }}
-                      >
-                        No pending salon requests
-                      </td>
-                    </tr>
-                  ) : (
-                    salonRequests.map((owner) => (
-                      <tr key={owner.id} style={{ borderBottom: '1px solid #222222', color: '#ffffff' }}>
-                        <td style={{ padding: '1rem 0.75rem', fontWeight: '500' }}>{owner.Name}</td>
-                        <td style={{ padding: '1rem 0.75rem', color: '#b3b3b3' }}>{owner.UserName}</td>
-                        <td style={{ padding: '1rem 0.75rem', color: '#b3b3b3' }}>{owner.Email}</td>
-                        <td style={{ padding: '1rem 0.75rem', color: '#b3b3b3' }}>{owner.PhoneNumber}</td>
-                        <td style={{ padding: '1rem 0.75rem' }}>
-                          <span style={{
-                            backgroundColor: 'rgba(218, 165, 32, 0.15)',
-                            color: '#daa520',
-                            padding: '4px 10px',
-                            borderRadius: '12px',
-                            fontSize: '0.8rem',
-                            fontWeight: '600',
-                            textTransform: 'capitalize',
-                          }}>
-                            {owner.Status || 'pending'}
-                          </span>
-                        </td>
-                        <td style={{ padding: '1rem 0.75rem', textAlign: 'right' }}>
-                          <button
-                            disabled={actionLoading}
-                            onClick={() => handleUpdateOwnerStatus(owner.id, 'verified')}
-                            style={{
-                              backgroundColor: '#daa520',
-                              color: '#000000',
-                              border: 'none',
-                              padding: '5px 12px',
-                              borderRadius: '4px',
-                              fontSize: '0.85rem',
-                              fontWeight: '600',
-                              cursor: 'pointer',
-                              marginRight: '0.5rem',
-                            }}
-                          >
+                      <td>
+                        <form
+                          className="admin-verify-form"
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            handleSubmitStatus(request.id);
+                          }}
+                        >
+                          <label className="admin-radio-label">
+                            <input
+                              type="radio"
+                              name={`status_${request.id}`}
+                              value="verified"
+                              checked={currentAction.status === 'verified'}
+                              onChange={() => handleRadioChange(request.id, 'verified')}
+                            />
                             Verify
-                          </button>
-                          <button
-                            disabled={actionLoading}
-                            onClick={() => handleUpdateOwnerStatus(owner.id, 'rejected')}
-                            style={{
-                              backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                              border: '1px solid #ef4444',
-                              color: '#ef4444',
-                              padding: '4px 10px',
-                              borderRadius: '4px',
-                              fontSize: '0.85rem',
-                              fontWeight: '600',
-                              cursor: 'pointer',
-                            }}
-                          >
+                          </label>
+
+                          <label className="admin-radio-label">
+                            <input
+                              type="radio"
+                              name={`status_${request.id}`}
+                              value="rejected"
+                              checked={currentAction.status === 'rejected'}
+                              onChange={() => handleRadioChange(request.id, 'rejected')}
+                            />
                             Reject
+                          </label>
+
+                          {currentAction.status === 'rejected' && (
+                            <div className="admin-reason-container">
+                              <span style={{ fontSize: '0.85rem', color: '#aaaaaa' }}>
+                                Write The Reason Here:
+                              </span>
+                              <textarea
+                                className="admin-reason-field"
+                                placeholder="Write the Reason Here"
+                                value={currentAction.reason}
+                                onChange={(e) => handleReasonChange(request.id, e.target.value)}
+                              />
+                            </div>
+                          )}
+
+                          <button
+                            type="submit"
+                            className="admin-verify-btn"
+                            disabled={actionLoadingId === request.id}
+                          >
+                            {actionLoadingId === request.id ? 'Saving...' : 'Submit'}
                           </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </main>
+                        </form>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

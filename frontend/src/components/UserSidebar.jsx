@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getImageUrl } from '../utils/imageUrl';
+import { getUserAvatarUrl } from '../utils/imageUrl';
 
 export const UserSidebar = () => {
   const { user, logout } = useAuth();
@@ -13,73 +13,86 @@ export const UserSidebar = () => {
   };
 
   const navItems = [
-    { label: 'Explore Salons', path: '/user/profile', icon: '🏪' },
-    { label: 'My Bookings', path: '/user/bookings', icon: '📅' },
-    { label: 'Edit Profile', path: '/user/edit-profile', icon: '👤' },
+    { label: 'Profile', path: '/user/profile', icon: '👤' },
+    { label: 'Booking History', path: '/user/bookings', icon: '🕒' },
     { label: 'Change Password', path: '/user/change-password', icon: '🔒' },
+    { label: 'Edit Profile', path: '/user/edit-profile', icon: '✏️' },
   ];
 
   return (
     <aside style={{
-      width: '280px',
-      backgroundColor: '#181920',
-      border: '1px solid #2E303E',
-      borderRadius: '12px',
-      padding: '1.5rem',
+      width: '240px',
+      backgroundColor: '#161616',
+      borderRight: '1px solid #222222',
+      minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column',
-      gap: '1.5rem',
-      height: 'fit-content',
+      flexShrink: 0,
+      fontFamily: "'Poppins', sans-serif",
     }}>
-      {/* User Header */}
+      {/* Centered User Avatar & Details */}
       <div style={{
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
-        gap: '1rem',
-        paddingBottom: '1.25rem',
-        borderBottom: '1px solid #2E303E',
+        padding: '2.5rem 1.25rem 2rem',
+        borderBottom: '1px solid #222222',
       }}>
-        <img
-          src={getImageUrl(user?.img)}
-          alt={user?.name || 'User'}
-          style={{
-            width: '56px',
-            height: '56px',
-            borderRadius: '50%',
-            objectFit: 'cover',
-            border: '2px solid #daa520',
-            backgroundColor: '#22232D',
-          }}
-          onError={(e) => {
-            e.target.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=60';
-          }}
-        />
-        <div style={{ overflow: 'hidden' }}>
-          <h3 style={{
-            fontSize: '1.05rem',
-            color: '#fff',
-            margin: 0,
-            whiteSpace: 'nowrap',
-            textOverflow: 'ellipsis',
-            overflow: 'hidden',
-          }}>
-            {user?.name || 'Customer'}
-          </h3>
-          <p style={{
-            fontSize: '0.8rem',
-            color: '#9CA3AF',
-            margin: '2px 0 0',
-            whiteSpace: 'nowrap',
-            textOverflow: 'ellipsis',
-            overflow: 'hidden',
-          }}>
-            {user?.email}
-          </p>
+        <div style={{
+          width: '74px',
+          height: '74px',
+          borderRadius: '50%',
+          padding: '3px',
+          border: '2px solid #F5A623',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: '0.85rem',
+          backgroundColor: '#202025',
+        }}>
+          <img
+            src={getUserAvatarUrl(user?.img, user?.name)}
+            alt={user?.name || 'User'}
+            style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+            onError={(e) => {
+              e.target.src = getUserAvatarUrl('', user?.name);
+            }}
+          />
         </div>
+        <h3 style={{
+          color: '#F5A623',
+          fontSize: '1.05rem',
+          fontWeight: '600',
+          margin: '0 0 4px',
+          textAlign: 'center',
+          maxWidth: '200px',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}>
+          {user?.name || 'Dhruv Rajput'}
+        </h3>
+        <p style={{
+          color: '#8E8E93',
+          fontSize: '0.82rem',
+          margin: 0,
+          textAlign: 'center',
+          maxWidth: '200px',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}>
+          {user?.email || 'dhruv@gmail.com'}
+        </p>
       </div>
 
       {/* Navigation Links */}
-      <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      <nav style={{
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '1rem 0',
+        flex: 1,
+      }}>
         {navItems.map((item) => (
           <NavLink
             key={item.path}
@@ -88,53 +101,48 @@ export const UserSidebar = () => {
             style={({ isActive }) => ({
               display: 'flex',
               alignItems: 'center',
-              gap: '0.75rem',
-              padding: '0.75rem 1rem',
-              borderRadius: '8px',
-              fontSize: '0.95rem',
-              fontWeight: '500',
+              gap: '0.85rem',
+              padding: '0.9rem 1.75rem',
+              fontSize: '0.92rem',
+              fontWeight: isActive ? '600' : '400',
               textDecoration: 'none',
               transition: 'all 0.2s ease',
-              backgroundColor: isActive ? 'rgba(218, 165, 32, 0.15)' : 'transparent',
-              color: isActive ? '#daa520' : '#E5E7EB',
-              borderLeft: isActive ? '3px solid #daa520' : '3px solid transparent',
+              backgroundColor: isActive ? '#242424' : 'transparent',
+              color: isActive ? '#daa520' : '#d1d1d1',
+              borderLeft: isActive ? '4px solid #daa520' : '4px solid transparent',
             })}
           >
-            <span>{item.icon}</span>
+            <span style={{ fontSize: '1.1rem' }}>{item.icon}</span>
             <span>{item.label}</span>
           </NavLink>
         ))}
-      </nav>
 
-      {/* Logout button */}
-      <button
-        onClick={handleLogout}
-        style={{
-          marginTop: 'auto',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '0.5rem',
-          padding: '0.75rem 1rem',
-          borderRadius: '8px',
-          border: '1px solid rgba(239, 68, 68, 0.4)',
-          backgroundColor: 'rgba(239, 68, 68, 0.08)',
-          color: '#EF4444',
-          fontSize: '0.95rem',
-          fontWeight: '600',
-          cursor: 'pointer',
-          transition: 'all 0.2s',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)';
-        }}
-      >
-        <span>🚪</span>
-        <span>Log Out</span>
-      </button>
+        {/* Logout */}
+        <div
+          onClick={handleLogout}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.85rem',
+            padding: '0.9rem 1.75rem',
+            fontSize: '0.92rem',
+            fontWeight: '400',
+            color: '#d1d1d1',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            marginTop: '0.5rem',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = '#EF4444';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = '#d1d1d1';
+          }}
+        >
+          <span style={{ fontSize: '1.1rem' }}>🚪</span>
+          <span>Logout</span>
+        </div>
+      </nav>
     </aside>
   );
 };

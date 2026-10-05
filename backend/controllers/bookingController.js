@@ -43,36 +43,51 @@ function parseAppointmentDateTime(dateVal, slotStr) {
 async function createBooking(req, res) {
   try {
     const userId = req.user.id;
-    const { salonId, serviceId, date, timeSlot } = req.body;
+    const salonId = req.body.salonId || req.body.salon_id;
+    const date = req.body.date || req.body.booking_date;
+    const timeSlot = req.body.timeSlot || req.body.time_slot;
+    const rawServices = req.body.service_ids || req.body.serviceIds || (req.body.serviceId ? [req.body.serviceId] : (req.body.service_id ? [req.body.service_id] : []));
 
-    if (!salonId || !serviceId || !date || !timeSlot) {
+    if (!salonId || !date || !timeSlot || (!rawServices || rawServices.length === 0)) {
       return res.status(400).json({ message: 'Salon, service, date, and time slot are all required.' });
     }
 
-    // Lookup service price from selectedservicesmst
-    const [services] = await pool.query(
-      `SELECT ss.id, ss.Price 
-       FROM selectedservicesmst ss
-       WHERE (ss.id = ? OR ss.ServiceName_id = ?) AND ss.SalonId_id = ?`,
-      [serviceId, serviceId, salonId]
-    );
-
-    if (services.length === 0) {
-      return res.status(404).json({ message: 'Selected service is not offered by this salon.' });
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (date < todayStr) {
+      return res.status(400).json({ message: 'Appointment date cannot be in the past.' });
     }
 
-    const serviceRecord = services[0];
-    const billAmount = serviceRecord.Price;
+    // Process each service
+    const createdBookingIds = [];
+    for (const sId of rawServices) {
+      const [services] = await pool.query(
+        `SELECT ss.id, ss.Price 
+         FROM selectedservicesmst ss
+         WHERE (ss.id = ? OR ss.ServiceName_id = ?) AND ss.SalonId_id = ?`,
+        [sId, sId, salonId]
+      );
 
-    const [result] = await pool.query(
-      `INSERT INTO slotbookingmst (BookingDate, TimeSlote, ServiceId_id, SalonId_id, UserId_id, BillAmount, Status)
-       VALUES (?, ?, ?, ?, ?, ?, 'Pending')`,
-      [date, timeSlot, serviceRecord.id, salonId, userId, billAmount]
-    );
+      if (services.length > 0) {
+        const serviceRecord = services[0];
+        const billAmount = serviceRecord.Price;
+
+        const [result] = await pool.query(
+          `INSERT INTO slotbookingmst (BookingDate, TimeSlote, ServiceId_id, SalonId_id, UserId_id, BillAmount, Status)
+           VALUES (?, ?, ?, ?, ?, ?, 'Pending')`,
+          [date, timeSlot, serviceRecord.id, salonId, userId, billAmount]
+        );
+        createdBookingIds.push(result.insertId);
+      }
+    }
+
+    if (createdBookingIds.length === 0) {
+      return res.status(404).json({ message: 'Selected service(s) are not offered by this salon.' });
+    }
 
     return res.status(201).json({
       message: 'Your appointment is booked. Waiting for owner confirmation.',
-      bookingId: result.insertId,
+      bookingId: createdBookingIds[0],
+      bookingIds: createdBookingIds,
     });
   } catch (err) {
     console.error('Create booking error:', err);
@@ -92,7 +107,7 @@ async function getUserBookings(req, res) {
     const [bookings] = await pool.query(
       `SELECT 
          b.id, b.BookingDate, b.TimeSlote, b.BillAmount, b.Status,
-         s.id AS SalonId, s.Name AS SalonName, s.Location AS SalonLocation, s.Img AS SalonImg,
+         s.id AS SalonId, s.Name AS SalonName, s.Location, s.Location AS SalonLocation, s.Img AS SalonImg,
          sm.ServiceName
        FROM slotbookingmst b
        JOIN salonmst s ON b.SalonId_id = s.id
@@ -170,9 +185,15 @@ async function updateBookingStatus(req, res) {
     const bookingId = req.params.id;
     const { status, reason } = req.body;
 
-    const normalizedStatus = (status || '').trim();
-    if (!['Accepted', 'Rejected'].includes(normalizedStatus)) {
-      return res.status(400).json({ message: 'Status must be either "Accepted" or "Rejected".' });
+    let normalizedStatus = (status || '').trim();
+    if (normalizedStatus.toLowerCase() === 'confirmed' || normalizedStatus.toLowerCase() === 'accepted') {
+      normalizedStatus = 'Accepted';
+    } else if (normalizedStatus.toLowerCase() === 'rejected' || normalizedStatus.toLowerCase() === 'cancelled') {
+      normalizedStatus = 'Rejected';
+    } else if (normalizedStatus.toLowerCase() === 'completed') {
+      normalizedStatus = 'Completed';
+    } else {
+      return res.status(400).json({ message: 'Status must be Accepted, Rejected, or Completed.' });
     }
 
     // Verify booking belongs to this owner's salon

@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from '../../components/Navbar';
-import Footer from '../../components/Footer';
-import AdminSidebar from '../../components/AdminSidebar';
+import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 
 export const ManageAreasPage = () => {
@@ -13,6 +11,18 @@ export const ManageAreasPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [viewMode, setViewMode] = useState('form'); // 'form' or 'list'
+  const [selectedCityFilter, setSelectedCityFilter] = useState(() => {
+    return new URLSearchParams(window.location.search).get('cityId') || 'all';
+  });
+
+  useEffect(() => {
+    const paramCity = new URLSearchParams(window.location.search).get('cityId');
+    if (paramCity) {
+      setSelectedCityFilter(paramCity);
+      setViewMode('list');
+    }
+  }, []);
 
   useEffect(() => {
     fetchAreasAndCities();
@@ -28,9 +38,6 @@ export const ManageAreasPage = () => {
       ]);
       setAreas(areasRes.data || []);
       setCities(citiesRes.data || []);
-      if (citiesRes.data?.length > 0 && !formData.cityId) {
-        setFormData((prev) => ({ ...prev, cityId: citiesRes.data[0].id }));
-      }
     } catch (err) {
       console.error('Failed to load areas/cities:', err);
       setError('Unable to load areas data.');
@@ -41,7 +48,10 @@ export const ManageAreasPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.areaName.trim() || !formData.cityId) return;
+    if (!formData.areaName.trim() || !formData.cityId) {
+      setError('Please provide an area name and select a city.');
+      return;
+    }
 
     setError('');
     setMessage('');
@@ -60,11 +70,11 @@ export const ManageAreasPage = () => {
           areaName: formData.areaName.trim(),
           cityId: formData.cityId,
         });
-        setMessage(`Area '${formData.areaName.trim()}' added.`);
+        setMessage(`Area '${formData.areaName.trim()}' added successfully.`);
       }
 
-      setFormData({ areaName: '', cityId: cities[0]?.id || '' });
-      fetchAreasAndCities();
+      setFormData({ areaName: '', cityId: '' });
+      await fetchAreasAndCities();
       setTimeout(() => setMessage(''), 4000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to save area.');
@@ -77,13 +87,9 @@ export const ManageAreasPage = () => {
     setEditingArea(area);
     setFormData({
       areaName: area.AreaName,
-      cityId: area.City_id,
+      cityId: area.CityName_id || area.City_id || '',
     });
-  };
-
-  const handleCancelEdit = () => {
-    setEditingArea(null);
-    setFormData({ areaName: '', cityId: cities[0]?.id || '' });
+    setViewMode('form');
   };
 
   const handleDelete = async (id, name) => {
@@ -92,7 +98,7 @@ export const ManageAreasPage = () => {
     try {
       await api.delete(`/admin/areas/${id}`);
       setMessage(`Area '${name}' deleted.`);
-      fetchAreasAndCities();
+      await fetchAreasAndCities();
       setTimeout(() => setMessage(''), 4000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to delete area.');
@@ -100,228 +106,180 @@ export const ManageAreasPage = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#0F1015' }}>
-      <Navbar />
+    <AdminLayout headerTitle="Dashboard Overview" activeMenu="areas">
+      {message && <div className="admin-banner-success">✓ {message}</div>}
+      {error && <div className="admin-banner-error">⚠ {error}</div>}
 
-      <main style={{ flex: 1, maxWidth: '1280px', width: '100%', margin: '2rem auto', padding: '0 1.5rem' }}>
-        <div style={{
-          display: 'flex',
-          gap: '2rem',
-          flexDirection: 'row',
-          alignItems: 'flex-start',
-        }}>
-          <AdminSidebar />
+      {viewMode === 'form' ? (
+        /* Add / Edit Area Form matching Page 2 Screenshot 2 */
+        <div className="admin-form-container">
+          <form className="admin-form-box" onSubmit={handleSubmit} autoComplete="off">
+            <h2 className="admin-form-title">
+              {editingArea ? 'Edit Area' : 'Add Area'}
+            </h2>
 
-          <section style={{ flex: 1, minWidth: 0 }}>
-            {/* Add / Edit Area Form */}
-            <div style={{
-              backgroundColor: '#181920',
-              border: '1px solid #2E303E',
-              borderRadius: '12px',
-              padding: '2rem',
-              marginBottom: '2rem',
-            }}>
-              <h1 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: '700', margin: '0 0 0.5rem' }}>
-                {editingArea ? 'Edit Area' : 'Add New Area'}
-              </h1>
-              <p style={{ color: '#9CA3AF', margin: '0 0 1.5rem', fontSize: '0.9rem' }}>
-                Configure neighborhood / locality boundaries for salon listings
-              </p>
-
-              {message && (
-                <div style={{
-                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                  border: '1px solid #10B981',
-                  color: '#10B981',
-                  padding: '0.85rem',
-                  borderRadius: '6px',
-                  marginBottom: '1.25rem',
-                  fontSize: '0.9rem',
-                }}>
-                  ✓ {message}
-                </div>
-              )}
-
-              {error && (
-                <div style={{
-                  backgroundColor: 'rgba(239, 68, 68, 0.15)',
-                  border: '1px solid #EF4444',
-                  color: '#EF4444',
-                  padding: '0.85rem',
-                  borderRadius: '6px',
-                  marginBottom: '1.25rem',
-                  fontSize: '0.9rem',
-                }}>
-                  {error}
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit} style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-end' }}>
-                <div style={{ flex: '1 1 200px' }}>
-                  <label style={{ display: 'block', color: '#E5E7EB', fontSize: '0.85rem', fontWeight: '500', marginBottom: '0.35rem' }}>
-                    Parent City
-                  </label>
-                  <select
-                    value={formData.cityId}
-                    onChange={(e) => setFormData({ ...formData, cityId: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      backgroundColor: '#22232D',
-                      border: '1px solid #2E303E',
-                      borderRadius: '8px',
-                      color: '#fff',
-                      fontSize: '0.95rem',
-                      outline: 'none',
-                    }}
-                  >
-                    {cities.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.CityName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div style={{ flex: '2 1 240px' }}>
-                  <label style={{ display: 'block', color: '#E5E7EB', fontSize: '0.85rem', fontWeight: '500', marginBottom: '0.35rem' }}>
-                    Area Name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Adajan, Vesu, Pal"
-                    value={formData.areaName}
-                    onChange={(e) => setFormData({ ...formData, areaName: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      backgroundColor: '#22232D',
-                      border: '1px solid #2E303E',
-                      borderRadius: '8px',
-                      color: '#fff',
-                      fontSize: '0.95rem',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  style={{
-                    backgroundColor: '#daa520',
-                    color: '#121212',
-                    padding: '0.75rem 1.75rem',
-                    borderRadius: '8px',
-                    border: 'none',
-                    fontSize: '0.95rem',
-                    fontWeight: '700',
-                    cursor: submitting ? 'not-allowed' : 'pointer',
-                    opacity: submitting ? 0.7 : 1,
-                    height: '46px',
-                  }}
-                >
-                  {submitting ? 'Saving...' : editingArea ? 'Update Area' : 'Add Area'}
-                </button>
-
-                {editingArea && (
-                  <button
-                    type="button"
-                    onClick={handleCancelEdit}
-                    style={{
-                      backgroundColor: '#22232D',
-                      color: '#9CA3AF',
-                      padding: '0.75rem 1.25rem',
-                      borderRadius: '8px',
-                      border: '1px solid #2E303E',
-                      fontSize: '0.95rem',
-                      cursor: 'pointer',
-                      height: '46px',
-                    }}
-                  >
-                    Cancel
-                  </button>
-                )}
-              </form>
+            <div className="admin-form-group">
+              <label htmlFor="areaName">Area Name</label>
+              <input
+                id="areaName"
+                type="text"
+                required
+                placeholder="Area Name"
+                value={formData.areaName}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, areaName: e.target.value }))
+                }
+              />
             </div>
 
-            {/* Areas Table */}
-            <div style={{
-              backgroundColor: '#181920',
-              border: '1px solid #2E303E',
-              borderRadius: '12px',
-              padding: '1.5rem',
-            }}>
-              <h2 style={{ color: '#fff', fontSize: '1.3rem', margin: '0 0 1.25rem' }}>
-                Configured Areas ({areas.length})
-              </h2>
+            <div className="admin-form-group">
+              <label htmlFor="cityName">City Name</label>
+              <select
+                id="cityName"
+                required
+                value={formData.cityId}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, cityId: e.target.value }))
+                }
+              >
+                <option value="">--Select City Name--</option>
+                {cities.map((city) => (
+                  <option key={city.id} value={city.id}>
+                    {city.CityName}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-              {loading ? (
-                <div style={{ color: '#daa520', padding: '2rem', textAlign: 'center' }}>Loading areas...</div>
-              ) : areas.length === 0 ? (
-                <div style={{ color: '#9CA3AF', padding: '2rem', textAlign: 'center' }}>No areas registered.</div>
-              ) : (
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '2px solid #2E303E', color: '#9CA3AF', textTransform: 'uppercase', fontSize: '0.75rem' }}>
-                      <th style={{ padding: '0.75rem 1rem' }}>ID</th>
-                      <th style={{ padding: '0.75rem 1rem' }}>Area Name</th>
-                      <th style={{ padding: '0.75rem 1rem' }}>City</th>
-                      <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Actions</th>
+            <button type="submit" className="admin-btn-save" disabled={submitting}>
+              {submitting ? 'Saving...' : editingArea ? 'Update' : 'Save'}
+            </button>
+
+            {editingArea && (
+              <button
+                type="button"
+                className="admin-toggle-link"
+                onClick={() => {
+                  setEditingArea(null);
+                  setFormData({ areaName: '', cityId: '' });
+                }}
+              >
+                Cancel Edit
+              </button>
+            )}
+
+            <button
+              type="button"
+              className="admin-toggle-link"
+              onClick={() => setViewMode('list')}
+            >
+              Show List of Areas
+            </button>
+          </form>
+        </div>
+      ) : (
+        /* List View matching AreaList.html */
+        <div className="admin-list-container">
+          <div className="admin-list-header-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <h3 className="admin-list-title" style={{ margin: 0 }}>Areas List</h3>
+              <select
+                value={selectedCityFilter}
+                onChange={(e) => setSelectedCityFilter(e.target.value)}
+                style={{
+                  backgroundColor: '#242424',
+                  color: '#ffffff',
+                  border: '1px solid rgba(212, 175, 55, 0.4)',
+                  borderRadius: '6px',
+                  padding: '6px 12px',
+                  fontSize: '0.9rem',
+                  outline: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="all">-- All Cities --</option>
+                {cities.map((city) => (
+                  <option key={city.id} value={city.id}>
+                    {city.CityName}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              type="button"
+              className="admin-toggle-link"
+              style={{ fontSize: '1.1rem', fontWeight: '600' }}
+              onClick={() => {
+                setEditingArea(null);
+                setFormData({ areaName: '', cityId: '' });
+                setViewMode('form');
+              }}
+            >
+              + Add New
+            </button>
+          </div>
+
+          {(() => {
+            const displayedAreas = areas.filter((area) => {
+              if (selectedCityFilter === 'all' || !selectedCityFilter) return true;
+              return String(area.CityName_id || area.City_id) === String(selectedCityFilter);
+            });
+
+            return (
+              <table className="admin-list-table">
+                <thead>
+                  <tr>
+                    <th>Area Id</th>
+                    <th>Area Name</th>
+                    <th>City Name</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={4} style={{ padding: '2rem', color: '#d4af37' }}>
+                        Loading areas...
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {areas.map((a) => (
-                      <tr key={a.id} style={{ borderBottom: '1px solid #2E303E', color: '#fff' }}>
-                        <td style={{ padding: '1rem', color: '#daa520', fontWeight: '600' }}>#{a.id}</td>
-                        <td style={{ padding: '1rem', fontWeight: '600' }}>{a.AreaName}</td>
-                        <td style={{ padding: '1rem', color: '#9CA3AF' }}>{a.CityName || `City #${a.City_id}`}</td>
-                        <td style={{ padding: '1rem', textAlign: 'right' }}>
+                  ) : displayedAreas.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} style={{ padding: '2rem', color: '#aaaaaa' }}>
+                        No areas found for this city. Click "+ Add New" to create one.
+                      </td>
+                    </tr>
+                  ) : (
+                    displayedAreas.map((area) => (
+                      <tr key={area.id}>
+                        <td>{area.id}</td>
+                        <td>{area.AreaName}</td>
+                        <td>{area.CityName || 'N/A'}</td>
+                        <td>
                           <button
-                            onClick={() => handleEdit(a)}
-                            style={{
-                              backgroundColor: '#22232D',
-                              border: '1px solid #2E303E',
-                              color: '#daa520',
-                              padding: '4px 10px',
-                              borderRadius: '4px',
-                              fontSize: '0.8rem',
-                              fontWeight: '600',
-                              cursor: 'pointer',
-                              marginRight: '0.5rem',
-                            }}
+                            type="button"
+                            className="admin-action-link"
+                            onClick={() => handleEdit(area)}
                           >
-                            Edit
+                            Update
                           </button>
                           <button
-                            onClick={() => handleDelete(a.id, a.AreaName)}
-                            style={{
-                              backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                              border: '1px solid #EF4444',
-                              color: '#EF4444',
-                              padding: '4px 10px',
-                              borderRadius: '4px',
-                              fontSize: '0.8rem',
-                              fontWeight: '600',
-                              cursor: 'pointer',
-                            }}
+                            type="button"
+                            className="admin-action-link delete"
+                            onClick={() => handleDelete(area.id, area.AreaName)}
                           >
                             Delete
                           </button>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </section>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            );
+          })()}
         </div>
-      </main>
-
-      <Footer />
-    </div>
+      )}
+    </AdminLayout>
   );
 };
 

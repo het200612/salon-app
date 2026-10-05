@@ -1,7 +1,7 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 const express    = require('express');
 const cors       = require('cors');
-const path       = require('path');
 const { testConnection } = require('./config/db');
 
 const app  = express();
@@ -25,6 +25,12 @@ app.use('/api/salons',   require('./routes/salonRoutes'));
 app.use('/api/owner',    require('./routes/ownerRoutes'));
 app.use('/api/user',     require('./routes/userRoutes'));
 app.use('/api/bookings', require('./routes/bookingRoutes'));
+
+// Route alias for /api/areas, /api/cities, /api/services
+app.get('/api/areas', require('./controllers/salonController').getAreas);
+app.get('/api/cities', require('./controllers/adminController').getCities);
+app.get('/api/services', require('./controllers/adminController').getServices);
+
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => {

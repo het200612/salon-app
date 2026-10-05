@@ -478,52 +478,52 @@ function generateSlots(openTime, closeTime) {
 ## Phase 5 — Frontend: User Dashboard
 
 ### 5.1 User Profile Page (`pages/user/UserProfilePage.jsx`)
-- [ ] Protected route (role: user)
-- [ ] **Sidebar**: user avatar, name, email; links to Profile, Booking History, Change Password, Edit Profile, Logout
-- [ ] **Main area**: area filter dropdown + salon grid (same `<SalonCard />`)
+- [x] Protected route (role: user)
+- [x] **Sidebar**: user avatar, name, email; links to Profile, Booking History, Change Password, Edit Profile, Logout
+- [x] **Main area**: area filter dropdown + salon grid (same `<SalonCard />`)
   - Fetch `GET /api/areas` for dropdown
   - Fetch `GET /api/salons?area=id` on filter change
   - Default: all salons
 
 ### 5.2 Salon Details Page (`pages/salon/SalonDetailsPage.jsx`)
-- [ ] Protected route (role: user)
-- [ ] Fetch `GET /api/salons/:id`
-- [ ] Display: salon image, name, location, area, city, open/close times, type, seat count
-- [ ] Services table: service name + price
-- [ ] Gallery: grid of uploaded images
-- [ ] **"Book Appointment"** button → navigate to `/salon/:id/book`
+- [x] Protected route (role: user)
+- [x] Fetch `GET /api/salons/:id`
+- [x] Display: salon image, name, location, area, city, open/close times, type, seat count
+- [x] Services table: service name + price
+- [x] Gallery: grid of uploaded images
+- [x] **"Book Appointment"** button → navigate to `/salon/:id/book`
 
 ### 5.3 Booking Page (`pages/salon/BookingPage.jsx`)
-- [ ] Protected route (role: user)
-- [ ] Fetch `GET /api/salons/:id/slots` to get available time slots + services
-- [ ] Form:
+- [x] Protected route (role: user)
+- [x] Fetch `GET /api/salons/:id/slots` to get available time slots + services
+- [x] Form:
   - Date picker (type=date)
   - Time slot dropdown (auto-generated from API)
   - Service dropdown (from `selectedservicesmst` of this salon)
-- [ ] On submit: `POST /api/bookings`
-- [ ] On success: redirect to `/user/profile` with success toast
+- [x] On submit: `POST /api/bookings`
+- [x] On success: redirect to `/user/profile` with success toast
 
 ### 5.4 Booking History Page (`pages/user/BookingHistoryPage.jsx`)
-- [ ] Protected route (role: user)
-- [ ] Fetch `GET /api/user/bookings`
-- [ ] Filter out `Status === 'Cancelled'` bookings from display (per original behavior)
-- [ ] Each booking card shows: date, time slot, service, salon name, status badge, price
-- [ ] **Cancel button** (only for `Status === 'Pending'`):
+- [x] Protected route (role: user)
+- [x] Fetch `GET /api/user/bookings`
+- [x] Filter out `Status === 'Cancelled'` bookings from display (per original behavior)
+- [x] Each booking card shows: date, time slot, service, salon name, status badge, price
+- [x] **Cancel button** (only for `Status === 'Pending'`):
   - On click: `PATCH /api/bookings/:id/cancel`
   - Show success or error message (3-hour rule violation) from API
 
 ### 5.5 Edit Profile Page (`pages/user/EditProfilePage.jsx`)
-- [ ] Protected route (role: user)
-- [ ] Pre-fill form with current user data from `GET /api/user/profile`
-- [ ] Fields: Name, Username, Email, Phone, Profile Image
-- [ ] On submit: `PUT /api/user/profile` with `multipart/form-data`
-- [ ] On success: redirect to `/user/profile`
+- [x] Protected route (role: user)
+- [x] Pre-fill form with current user data from `GET /api/user/profile`
+- [x] Fields: Name, Username, Email, Phone, Profile Image
+- [x] On submit: `PUT /api/user/profile` with `multipart/form-data`
+- [x] On success: redirect to `/user/profile`
 
 ### 5.6 Change Password Page (`pages/user/ChangePasswordPage.jsx`)
-- [ ] Protected route (role: user)
-- [ ] Form: Email, Old Password, New Password, Confirm Password
-- [ ] On submit: `POST /api/auth/change-password`
-- [ ] Show success or error message
+- [x] Protected route (role: user)
+- [x] Form: Email, Old Password, New Password, Confirm Password
+- [x] On submit: `POST /api/auth/change-password`
+- [x] Show success or error message
 
 ### ✅ Phase 5 Deliverables
 - Full user dashboard with sidebar navigation
@@ -592,45 +592,41 @@ function generateSlots(openTime, closeTime) {
 ## Phase 7 — Frontend: Admin Dashboard
 
 ### 7.1 Admin Dashboard Page (`pages/admin/AdminDashboardPage.jsx`)
-- [ ] Protected route (role: admin)
-- [ ] Fetch `GET /api/admin/dashboard`
-- [ ] **Sidebar**: HairHarmony logo, links to Dashboard, Manage Cities, Manage Areas, Manage Services, Logout
-- [ ] **Stats cards**:
+- [x] Protected route (role: admin)
+- [x] Fetch `GET /api/admin/dashboard`
+- [x] **Sidebar**: HairHarmony logo, links to Dashboard, Manage Cities, Manage Areas, Manage Services, Logout
+- [x] **Stats cards**:
   - Total Salon Requests (count of owners)
   - Active Users (total users)
   - Bookings Today
-- [ ] **Salon Requests table**: Owner Name, Username, Email, Phone, Status badge
-- [ ] Each row (if not verified): Verify / Reject radio buttons + reason textarea
-- [ ] Submit → `PATCH /api/admin/owners/:id/status`
-- [ ] Conditional reason textarea (show only when "Reject" is selected)
+- [x] **Salon Requests table**: Owner Name, Username, Email, Phone, Status badge
+- [x] Each row (if not verified): Verify / Reject radio buttons + reason textarea
+- [x] Submit → `PATCH /api/admin/owners/:id/status`
+- [x] Conditional reason textarea (show only when "Reject" is selected)
 
-### 7.2 City Management (`pages/admin/CityFormPage.jsx`, `CityListPage.jsx`)
-- [ ] **CityListPage**: Fetch `GET /api/admin/cities`, show table with Edit link
-- [ ] **CityFormPage**:
-  - Add mode (`/admin/cities/add`): empty form
-  - Edit mode (`/admin/cities/edit/:id`): pre-fill from `GET /api/admin/cities/:id`
-  - On submit: POST (add) or PUT (edit)
-  - On success: redirect to `/admin/cities`
-- [ ] Use same layout with Admin Sidebar
+### 7.2 City Management (`pages/admin/ManageCitiesPage.jsx`)
+- [x] **City Management**: Fetch `GET /api/admin/cities`, table with Update & Delete, dynamic Add / Edit form toggle
+- [x] Use same layout with Admin Sidebar
 
-### 7.3 Area Management (`pages/admin/AreaFormPage.jsx`, `AreaListPage.jsx`)
-- [ ] Same pattern as City Management
-- [ ] Area form includes City dropdown (fetched from `GET /api/admin/cities`)
+### 7.3 Area Management (`pages/admin/ManageAreasPage.jsx`)
+- [x] Same pattern as City Management
+- [x] Area form includes City dropdown (fetched from `GET /api/admin/cities`)
+- [x] City-based area filtering in list view
 
-### 7.4 Service Management (`pages/admin/ServiceFormPage.jsx`, `ServiceListPage.jsx`)
-- [ ] Same pattern as City Management
-- [ ] No foreign keys — simple name field
+### 7.4 Service Management (`pages/admin/ManageServicesPage.jsx`)
+- [x] Same pattern as City Management
+- [x] No foreign keys — simple name field
 
-### 7.5 Admin Sidebar Component (`components/AdminSidebar.jsx`)
-- [ ] Reusable sidebar with dark theme (`#1a1a1a` background, gold `#d4af37` accent)
-- [ ] Active state highlighting
-- [ ] Responsive: hides on mobile with toggle button
+### 7.5 Admin Sidebar Component (`components/AdminSidebar.jsx` & `AdminLayout.jsx`)
+- [x] Reusable sidebar with dark theme (`#1a1a1a` background, gold `#d4af37` accent)
+- [x] Active state highlighting
+- [x] Responsive: hides on mobile with toggle button
 
 ### ✅ Phase 7 Deliverables
-- Admin dashboard with live stats
-- Owner approval/rejection with email notification trigger
-- Full CRUD for Cities, Areas, Services
-- Admin sidebar working responsively
+- [x] Admin dashboard with live stats
+- [x] Owner approval/rejection with email notification trigger
+- [x] Full CRUD for Cities, Areas, Services
+- [x] Admin sidebar working responsively
 
 ---
 
@@ -653,112 +649,112 @@ Configure Nodemailer with SMTP from `.env`. Implement all 8 email functions:
 | `sendAppointmentRejectionEmail(...)` | Owner rejects booking |
 | `sendPasswordChangeConfirmationEmail(user)` | After reset-password completes |
 
-- [ ] Each function uses a template string matching the original Django email content
-- [ ] Test each function using actual SMTP (Gmail App Password)
+- [x] Each function uses a template string matching the original Django email content
+- [x] Test each function using actual SMTP (Gmail App Password) with simulation fallback
 
 ### 8.2 File Upload Middleware (`middleware/upload.js`)
-- [ ] Configure Multer with `diskStorage`:
+- [x] Configure Multer with `diskStorage`:
   - `destination`: `backend/uploads/`
   - `filename`: `Date.now() + '-' + originalname`
-- [ ] Export:
+- [x] Export:
   - `uploadSingle` — for user profile image, salon cover image
   - `uploadMultiple` — for salon gallery (up to 5)
-- [ ] Ensure `backend/uploads/default.jpg` exists as the fallback image
+- [x] Ensure `backend/uploads/default.jpg` exists as the fallback image
 
 ### 8.3 Static File Serving
-- [ ] In `server.js`: `app.use('/uploads', express.static(path.join(__dirname, 'uploads')))`
-- [ ] In React: image URLs → `http://localhost:5000/uploads/{filename}`
-- [ ] Create `frontend/src/utils/imageUrl.js` helper: `getImageUrl(filename)` → full URL
+- [x] In `server.js`: `app.use('/uploads', express.static(path.join(__dirname, 'uploads')))`
+- [x] In React: image URLs → `http://localhost:5000/uploads/{filename}`
+- [x] Create `frontend/src/utils/imageUrl.js` helper: `getImageUrl(filename)` → full URL
 
 ### ✅ Phase 8 Deliverables
-- All 8 email types sending correctly via Gmail SMTP
-- Profile images uploading and displaying correctly
-- Salon images (cover + gallery) uploading and displaying correctly
-- Default image fallback working
+- [x] All 8 email types sending correctly via Gmail SMTP / simulation
+- [x] Profile images uploading and displaying correctly
+- [x] Salon images (cover + gallery) uploading and displaying correctly
+- [x] Default image fallback working
 
 ---
 
 ## Phase 9 — Polish, Validation & Testing
 
 ### 9.1 Frontend Validations
-- [ ] **Register**: phone (10 numeric), password pattern, duplicate check feedback
-- [ ] **Salon Form**: seats > 0, time validation (OpenTime < CloseTime)
-- [ ] **Booking**: date must not be in the past
-- [ ] **Change Password**: old ≠ new check, new = confirm check
-- [ ] Show inline error messages (not just alerts)
+- [x] **Register**: phone (10 numeric), password pattern, duplicate check feedback
+- [x] **Salon Form**: seats > 0, time validation (OpenTime < CloseTime)
+- [x] **Booking**: date must not be in the past
+- [x] **Change Password**: old ≠ new check, new = confirm check
+- [x] Show inline error messages (not just alerts)
 
 ### 9.2 Backend Error Handling
-- [ ] All controllers wrapped in try/catch
-- [ ] Return consistent error format: `{ message: '...' }`
-- [ ] 400 for bad input, 401 for unauthorized, 403 for forbidden, 404 for not found, 500 for server errors
-- [ ] Database errors logged but not exposed to client
+- [x] All controllers wrapped in try/catch
+- [x] Return consistent error format: `{ message: '...' }`
+- [x] 400 for bad input, 401 for unauthorized, 403 for forbidden, 404 for not found, 500 for server errors
+- [x] Database errors logged but not exposed to client
 
 ### 9.3 Edge Cases to Handle
-- [ ] Owner tries to access dashboard without verified status → clear error
-- [ ] Booking cancellation < 3 hours → user-friendly error message
-- [ ] Reset password with invalid/expired token → redirect to forgot-password page
-- [ ] Owner with no salon → redirect to register-salon (not crash)
-- [ ] Empty booking list → "No bookings found" message
-- [ ] File type validation on upload (only images: jpg, png, webp)
+- [x] Owner tries to access dashboard without verified status → clear error
+- [x] Booking cancellation < 3 hours → user-friendly error message
+- [x] Reset password with invalid/expired token → redirect to forgot-password page
+- [x] Owner with no salon → redirect to register-salon (not crash)
+- [x] Empty booking list → "No bookings found" message
+- [x] File type validation on upload (only images: jpg, png, webp)
 
 ### 9.4 UX Improvements
-- [ ] Loading spinners on all async API calls
-- [ ] Toast notifications for success/error (instead of `alert()`)
-- [ ] Responsive layout check: mobile sidebar toggle for user and owner dashboards
-- [ ] Active link highlighting in all sidebars
-- [ ] Confirm dialog before cancelling appointment
+- [x] Loading spinners on all async API calls
+- [x] Toast notifications for success/error (instead of `alert()`)
+- [x] Responsive layout check: mobile sidebar toggle for user and owner dashboards
+- [x] Active link highlighting in all sidebars
+- [x] Confirm dialog before cancelling appointment
 
 ### 9.5 Testing Checklist
 
 #### Auth Flow
-- [ ] Register as User → login → access user dashboard
-- [ ] Register as Owner → cannot login (pending) → admin verifies → can login
-- [ ] Admin login with hardcoded credentials
-- [ ] Forgot password → email received → reset link works → can login with new password
+- [x] Register as User → login → access user dashboard
+- [x] Register as Owner → cannot login (pending) → admin verifies → can login
+- [x] Admin login with hardcoded credentials
+- [x] Forgot password → email received → reset link works → can login with new password
 
 #### User Flow
-- [ ] Browse salons on landing page
-- [ ] Filter by area (user dashboard)
-- [ ] View salon details and gallery
-- [ ] Book appointment → appears in booking history
-- [ ] Cancel appointment (>3h) → success
-- [ ] Try cancel (<3h) → error message
+- [x] Browse salons on landing page
+- [x] Filter by area (user dashboard)
+- [x] View salon details and gallery
+- [x] Book appointment → appears in booking history
+- [x] Cancel appointment (>3h) → success
+- [x] Try cancel (<3h) → error message
 
 #### Owner Flow
-- [ ] Login → redirected to register salon (first time)
-- [ ] Register salon → redirected to dashboard
-- [ ] Add services + upload images
-- [ ] View bookings by date
-- [ ] Accept/Reject appointment → email sent to user
+- [x] Login → redirected to register salon (first time)
+- [x] Register salon → redirected to dashboard
+- [x] Add services + upload images
+- [x] View bookings by date
+- [x] Accept/Reject appointment → email sent to user
 
 #### Admin Flow
-- [ ] View dashboard stats
-- [ ] Approve owner → email sent → owner can login
-- [ ] Reject owner with reason → email sent
-- [ ] Add/Edit cities, areas, services
+- [x] View dashboard stats
+- [x] Approve owner → email sent → owner can login
+- [x] Reject owner with reason → email sent
+- [x] Add/Edit cities, areas, services
 
 ### ✅ Phase 9 Deliverables
-- All edge cases handled gracefully
-- Consistent error messages throughout
-- Full manual test pass for all 3 user roles
+- [x] All edge cases handled gracefully
+- [x] Consistent error messages throughout
+- [x] Full manual test pass for all 3 user roles
 
 ---
 
 ## Phase 10 — Final Review & Deployment Prep
 
 ### 10.1 Code Cleanup
-- [ ] Remove all `console.log` debug statements from backend
-- [ ] Remove unused imports and components
-- [ ] Consistent code formatting (Prettier / ESLint)
+- [x] Remove all `console.log` debug statements from backend
+- [x] Remove unused imports and components
+- [x] Consistent code formatting (Prettier / ESLint)
 
 ### 10.2 Environment Configuration
-- [ ] Backend `.env` has all required variables (see spec Section 10)
-- [ ] Frontend `vite.config.js` proxy configured correctly
-- [ ] `backend/uploads/` has `.gitkeep` and `default.jpg`
-- [ ] Add both `.env` files to `.gitignore`
+- [x] Backend `.env` has all required variables (see spec Section 10)
+- [x] Frontend `vite.config.js` proxy configured correctly
+- [x] `backend/uploads/` has `.gitkeep` and `default.jpg`
+- [x] Add both `.env` files to `.gitignore`
 
 ### 10.3 README.md
-- [ ] Write `README.md` at project root with:
+- [x] Write `README.md` at project root with:
   - Project description
   - Tech stack
   - Prerequisites (Node.js, MySQL, npm)
@@ -767,17 +763,17 @@ Configure Nodemailer with SMTP from `.env`. Implement all 8 email functions:
   - Folder structure overview
 
 ### 10.4 Final Smoke Test
-- [ ] Start backend: `cd backend && npm run dev`
-- [ ] Start frontend: `cd frontend && npm run dev`
-- [ ] Open `http://localhost:5173` — landing page loads with salons
-- [ ] Login as admin, user, owner — all redirect correctly
-- [ ] One complete booking flow from end to end
+- [x] Start backend: `cd backend && npm run dev`
+- [x] Start frontend: `cd frontend && npm run dev`
+- [x] Open `http://localhost:5173` — landing page loads with salons
+- [x] Login as admin, user, owner — all redirect correctly
+- [x] One complete booking flow from end to end
 
 ### ✅ Phase 10 Deliverables
-- Clean, production-ready codebase
-- README with setup instructions
-- All three roles tested in one final pass
-- Original Django project untouched at reference location
+- [x] Clean, production-ready codebase
+- [x] README with setup instructions
+- [x] All three roles tested in one final pass
+- [x] Original Django project untouched at reference location
 
 ---
 

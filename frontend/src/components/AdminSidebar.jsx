@@ -12,14 +12,11 @@ export const AdminSidebar = () => {
   };
 
   const navItems = [
-    { label: 'Dashboard', path: '/admin/dashboard', icon: '🎛️' },
-    { label: 'Manage Cities', path: '/admin/cities', icon: '🏙️' },
-    { label: 'Manage Areas', path: '/admin/areas', icon: '📍' },
-    { label: 'Manage Salon Services', path: '/admin/services', icon: '✂️' },
-    { label: 'Manage Users', path: '/admin/users', icon: '👥' },
-    { label: 'Bookings', path: '/admin/bookings', icon: '📅' },
-    { label: 'Settings', path: '/admin/settings', icon: '⚙️' },
-    { label: 'Change Password', path: '/admin/change-password', icon: '🔒' },
+    { label: 'Dashboard', path: '/admin/dashboard', icon: 'fas fa-tachometer-alt' },
+    { label: 'Manage Cities', path: '/admin/cities', icon: 'fas fa-city' },
+    { label: 'Manage Areas', path: '/admin/areas', icon: 'fas fa-map-marker-alt' },
+    { label: 'Manage Salon Services', path: '/admin/services', icon: 'fas fa-store' },
+    { label: 'Change Password', path: '/admin/change-password', icon: 'fas fa-key' },
   ];
 
   return (

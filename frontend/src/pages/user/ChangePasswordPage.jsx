@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import Navbar from '../../components/Navbar';
-import Footer from '../../components/Footer';
-import UserSidebar from '../../components/UserSidebar';
+import { Link } from 'react-router-dom';
+import UserLayout from '../../components/UserLayout';
 import api from '../../services/api';
 
 export const ChangePasswordPage = () => {
@@ -19,21 +18,31 @@ export const ChangePasswordPage = () => {
     setMessage('');
     setError('');
 
+    if (formData.currentPassword && formData.currentPassword === formData.newPassword) {
+      setError('New password must be different from your current password.');
+      return;
+    }
+
     if (formData.newPassword !== formData.confirmPassword) {
       setError('New password and confirm password do not match.');
       return;
     }
 
-    if (formData.newPassword.length < 6) {
-      setError('New password must be at least 6 characters long.');
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(formData.newPassword)) {
+      setError(
+        'New password must be at least 8 characters with uppercase, lowercase, digit, and special symbol (@$!%*?&).'
+      );
       return;
     }
 
     try {
       setLoading(true);
       await api.post('/auth/change-password', {
+        oldPassword: formData.currentPassword,
         currentPassword: formData.currentPassword,
         newPassword: formData.newPassword,
+        confirmPassword: formData.confirmPassword,
       });
 
       setMessage('Your password has been changed successfully.');
@@ -42,6 +51,7 @@ export const ChangePasswordPage = () => {
         newPassword: '',
         confirmPassword: '',
       });
+      setTimeout(() => setMessage(''), 4000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to change password. Please check your current password.');
     } finally {
@@ -50,162 +60,93 @@ export const ChangePasswordPage = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#0F1015' }}>
-      <Navbar />
+    <UserLayout activeMenu="change-password">
+      <div className="user-edit-container">
+        <h2 className="user-edit-title">Change Password</h2>
 
-      <main style={{ flex: 1, maxWidth: '1280px', width: '100%', margin: '2rem auto', padding: '0 1.5rem' }}>
-        <div style={{
-          display: 'flex',
-          gap: '2rem',
-          flexDirection: 'row',
-          alignItems: 'flex-start',
-        }}>
-          {/* User Sidebar */}
-          <UserSidebar />
+        {message && (
+          <div style={{
+            backgroundColor: 'rgba(46, 204, 113, 0.15)',
+            border: '1px solid #2ecc71',
+            color: '#2ecc71',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            marginBottom: '1.5rem',
+            textAlign: 'center',
+            fontSize: '0.95rem',
+          }}>
+            ✓ {message}
+          </div>
+        )}
 
-          {/* Change Password Form */}
-          <section style={{ flex: 1, minWidth: 0 }}>
-            <div style={{
-              backgroundColor: '#181920',
-              border: '1px solid #2E303E',
-              borderRadius: '12px',
-              padding: '2rem',
-              maxWidth: '540px',
-            }}>
-              <h1 style={{
-                color: '#fff',
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                margin: '0 0 0.5rem',
-                fontFamily: "'Poppins', sans-serif",
-              }}>
-                Change Password
-              </h1>
-              <p style={{ color: '#9CA3AF', margin: '0 0 1.5rem', fontSize: '0.9rem' }}>
-                Ensure your account remains secure with a strong password
-              </p>
+        {error && (
+          <div style={{
+            backgroundColor: 'rgba(239, 68, 68, 0.15)',
+            border: '1px solid #ef4444',
+            color: '#ef4444',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            marginBottom: '1.5rem',
+            textAlign: 'center',
+            fontSize: '0.95rem',
+          }}>
+            ⚠ {error}
+          </div>
+        )}
 
-              {message && (
-                <div style={{
-                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                  border: '1px solid #10B981',
-                  color: '#10B981',
-                  padding: '0.85rem',
-                  borderRadius: '6px',
-                  marginBottom: '1.25rem',
-                  fontSize: '0.9rem',
-                }}>
-                  ✓ {message}
-                </div>
-              )}
+        <form className="user-edit-form" onSubmit={handleSubmit} autoComplete="off">
+          <div className="user-edit-group">
+            <label htmlFor="currentPassword">Current Password:</label>
+            <input
+              id="currentPassword"
+              type="password"
+              required
+              placeholder="Enter current password"
+              value={formData.currentPassword}
+              onChange={(e) =>
+                setFormData((p) => ({ ...p, currentPassword: e.target.value }))
+              }
+            />
+          </div>
 
-              {error && (
-                <div style={{
-                  backgroundColor: 'rgba(239, 68, 68, 0.15)',
-                  border: '1px solid #EF4444',
-                  color: '#EF4444',
-                  padding: '0.85rem',
-                  borderRadius: '6px',
-                  marginBottom: '1.25rem',
-                  fontSize: '0.9rem',
-                }}>
-                  {error}
-                </div>
-              )}
+          <div className="user-edit-group">
+            <label htmlFor="newPassword">New Password:</label>
+            <input
+              id="newPassword"
+              type="password"
+              required
+              placeholder="Enter new password"
+              value={formData.newPassword}
+              onChange={(e) =>
+                setFormData((p) => ({ ...p, newPassword: e.target.value }))
+              }
+            />
+          </div>
 
-              <form onSubmit={handleSubmit}>
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <label style={{ display: 'block', color: '#E5E7EB', fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.4rem' }}>
-                    Current Password
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={formData.currentPassword}
-                    onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      backgroundColor: '#22232D',
-                      border: '1px solid #2E303E',
-                      borderRadius: '8px',
-                      color: '#fff',
-                      fontSize: '0.95rem',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
+          <div className="user-edit-group">
+            <label htmlFor="confirmPassword">Confirm Password:</label>
+            <input
+              id="confirmPassword"
+              type="password"
+              required
+              placeholder="Confirm new password"
+              value={formData.confirmPassword}
+              onChange={(e) =>
+                setFormData((p) => ({ ...p, confirmPassword: e.target.value }))
+              }
+            />
+          </div>
 
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <label style={{ display: 'block', color: '#E5E7EB', fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.4rem' }}>
-                    New Password
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={formData.newPassword}
-                    onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      backgroundColor: '#22232D',
-                      border: '1px solid #2E303E',
-                      borderRadius: '8px',
-                      color: '#fff',
-                      fontSize: '0.95rem',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
+          <button type="submit" className="user-save-btn" disabled={loading}>
+            {loading ? 'Updating Password...' : 'Save Password'}
+          </button>
 
-                <div style={{ marginBottom: '1.75rem' }}>
-                  <label style={{ display: 'block', color: '#E5E7EB', fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.4rem' }}>
-                    Confirm New Password
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={formData.confirmPassword}
-                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      backgroundColor: '#22232D',
-                      border: '1px solid #2E303E',
-                      borderRadius: '8px',
-                      color: '#fff',
-                      fontSize: '0.95rem',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  style={{
-                    backgroundColor: '#daa520',
-                    color: '#121212',
-                    padding: '0.85rem 1.75rem',
-                    borderRadius: '8px',
-                    border: 'none',
-                    fontSize: '1rem',
-                    fontWeight: '600',
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    opacity: loading ? 0.7 : 1,
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  {loading ? 'Updating Password...' : 'Update Password'}
-                </button>
-              </form>
-            </div>
-          </section>
-        </div>
-      </main>
-
-      <Footer />
-    </div>
+          <Link to="/user/profile" className="user-back-btn">
+            Go Back To Profile
+          </Link>
+        </form>
+      </div>
+    </UserLayout>
   );
 };
 
