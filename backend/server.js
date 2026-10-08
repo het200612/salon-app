@@ -59,4 +59,5 @@ async function start() {
   });
 }
 
+// Server entry point
 start();

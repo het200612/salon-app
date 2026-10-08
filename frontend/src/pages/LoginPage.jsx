@@ -43,7 +43,7 @@ export const LoginPage = () => {
       navigate(redirectPath, { replace: true });
     } catch (err) {
       console.error('Login error:', err);
-      const msg = err.response?.data?.message || 'Username or password is incorrect';
+      const msg = err.response?.data?.message || (err.message === 'Network Error' || !err.response ? 'Unable to reach backend server. Please verify the backend is running.' : 'Username or password is incorrect');
       setErrorMsg(msg);
     } finally {
       setLoading(false);
